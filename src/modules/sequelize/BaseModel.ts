@@ -76,26 +76,26 @@ export abstract class BaseModel extends Model {
     values?: Partial<M>,
     options?: O
   ): Promise<O extends { returning: false } | { ignoreDuplicates: true } ? void : M> {
-    return Model.create<M, O>.call(this, values, options);
+    return Model.create.call(this, values, options);
   }
 
   public static findAll<M extends Model_> (
     this: ModelStatic<M>,
     options?: FindOptions<M>): Promise<M[]> {
-    return Model.findAll<M>.call(this, options);
+    return Model.findAll.call(this, options);
   }
 
   public static findOne<M extends Model_> (
     this: ModelStatic<M>,
     options?: FindOptions<M>): Promise<M> {
-    return Model.findOne<M>.call(this, options);
+    return Model.findOne.call(this, options);
   }
 
   public static findOrCreate<M extends Model_>(
     this: ModelStatic<M>,
     options: FindOrCreateOptions<M, CreationAttributes<M>>
   ): Promise<[M, boolean]> {
-    return Model.findOrCreate<M>.call(this, options);
+    return Model.findOrCreate.call(this, options);
   }
 
   public static count<M extends Model_> (
@@ -110,13 +110,13 @@ export abstract class BaseModel extends Model {
     this: ModelStatic<M>,
     options?: CountWithOptions<M> | Omit<CountOptions<M>, 'group'>):
     Promise<GroupedCountResultItem[]> | Promise<number>{
-    return Model.count<M>.call(this, options);
+    return Model.count.call(this, options);
   }
 
   public static destroy<M extends Model_> (
     this: ModelStatic<M>,
     options?: DestroyOptions<M>): Promise<number> {
-    return Model.destroy<M>.call(this, options);
+    return Model.destroy.call(this, options);
   }
 
   public static update<M extends Model_>(
@@ -142,7 +142,7 @@ export abstract class BaseModel extends Model {
     options: (Omit<UpdateOptions<M>, 'returning'>
       & { returning: Exclude<UpdateOptions<M>['returning'], undefined | false>}) | UpdateOptions<M>
   ): Promise<[affectedCount: number, affectedRows: M[]]> | Promise<[affectedCount: number]> {
-    return Model.update<M>.call(this, values, options);
+    return Model.update.call(this, values, options);
   }
 
 }
