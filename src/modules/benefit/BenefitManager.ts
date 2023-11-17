@@ -4,11 +4,11 @@ import {removeDuplicates} from "../../utils/ArrayUtils";
 import {resendMgr, WebhookData} from "../email/resend/ResendManager";
 import {EmailType} from "../email/EmailConfig";
 import {User} from "../user/models/User";
-import {Op} from "sequelize";
 import {BenefitRecord, BenefitType} from "./models/BenefitRecord";
 import {BenefitEmailTemplate, Reward, RewardType} from "./models/BenefitEmailTemplate";
 import {BenefitApp} from "./models/BenefitApp";
 import {webPushMgr} from "../webPush/WebPushManager";
+import {pushMgr} from "../push/Push";
 
 export function benefitMgr() {
   return getManager(BenefitManager)
@@ -48,6 +48,9 @@ export class BenefitManager extends BaseManager {
         console.error(`[SendBenefitEmails: ${templateId}] For ${to} Error:`, e)
       }
     }
+
+    const targetAddresses = removeDuplicates(targetUsers.map(u => u.mintAddress))
+    await pushMgr().send(title, content, targetAddresses)
 
     console.log(`[SendBenefitEmails: ${templateId}] Finished`, res.length)
     return res
