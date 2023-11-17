@@ -6,15 +6,14 @@
   "scripts": {
     "compile": "tsc",
     "node": "tsc & node ./dist/index.js",
-
     "compile-scripts": "tsc -p script-tsconfig.json",
 
-    "sync-sequelize": "npm run compile-scripts & node ./dist/scripts/src/scripts/SyncSequelize.js",
+    "sync-sequelize": "npm run compile-scripts & node ./dist/scripts/scripts/SyncSequelize.js",
+    "test-modify-group": "npm run compile-scripts & node ./dist/scripts/scripts/TestModifyGroup.js",
 
     "build-test": "./scripts/build-test.sh",
     "run-test": "./scripts/build-test.sh & ./scripts/run-test.sh",
     "deploy-test": "./scripts/build-test.sh & ./scripts/deploy-test.sh",
-
     "build-prod": "./scripts/build-prod.sh",
     "run-prod": "./scripts/build-prod.sh & ./scripts/run-prod.sh",
     "deploy-prod": "./scripts/build-prod.sh & ./scripts/deploy-prod.sh"
@@ -53,6 +52,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@bnb-chain/greenfield-js-sdk": "^1.0.2",
     "async-mutex": "^0.3.2",
     "dotenv": "^16.0.1",
     "ethers": "5.7.2",
