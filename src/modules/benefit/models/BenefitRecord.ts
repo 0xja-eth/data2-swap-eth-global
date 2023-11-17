@@ -25,13 +25,6 @@ export class BenefitRecord extends BaseModel {
   @JSONColumn
   credentialIds?: string[];
 
-  /**
-   * @deprecated
-   */
-  @ForeignKey(() => Credential)
-  @Column(DataType.BIGINT)
-  credentialId!: string;
-
   @Column({
     type: DataType.DECIMAL(32, 6),
     get() { return Number(this.getDataValue("value")) }
@@ -60,4 +53,3 @@ export class BenefitRecord extends BaseModel {
 }
 
 import {User} from "../../user/models/User";
-import {Credential} from "../../scan/models/Credential";
