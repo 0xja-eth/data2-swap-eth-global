@@ -56,11 +56,13 @@ export class BNBManager extends BaseManager {
     this.dataSwap.events.Buy(
       {}, async (err, event) => {
         if (!event) return console.error(err);
+        console.log("onBuy", event)
         await this.onBuy(event);
       })
     this.dataSwap.events.Send(
       {}, async (err, event) => {
         if (!event) return console.error(err);
+        console.log("onSend", event)
         await this.onSend(event);
       })
   }

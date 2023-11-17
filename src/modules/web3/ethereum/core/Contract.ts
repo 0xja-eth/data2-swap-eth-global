@@ -7,7 +7,10 @@ import {
   EventOptions as _EventOptions,
   PastEventOptions as _PastEventOptions,
 } from "web3-eth-contract";
-import {AbiItem, AbiType, StateMutabilityType} from "web3-utils";
+// import {AbiType, StateMutabilityType} from "web3-utils";
+export type AbiType = 'function' | 'constructor' | 'event' | 'fallback';
+export type StateMutabilityType = 'pure' | 'view' | 'nonpayable' | 'payable';
+
 import {ethMgr} from "../EthereumManager";
 import {PromiEvent, TransactionReceipt} from "web3-core";
 import {ETHInstance} from "./ETHInstance";
