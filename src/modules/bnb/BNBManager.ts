@@ -38,6 +38,13 @@ export class BNBManager extends BaseManager {
 
   public dataSwap: ContractOf<"DataSwap">
 
+  public get privateKey() {
+    return this.dataSwap.ethInstance.account.privateKey
+  }
+  public get mainAddress() {
+    return this.dataSwap.ethInstance.account.address
+  }
+
   public onReady() {
     super.onReady();
 
@@ -67,25 +74,46 @@ export class BNBManager extends BaseManager {
     try {
       const member = await this.client.group.headGroupMember(GroupName, GroupOwner, _buyer)
       if (member?.groupMember?.member != _buyer) throw new Error("Not in group")
-
-      await BenefitApp.findOrCreate({
-        where: { name: `dataSwap User: ${_buyer}` }
-      })
     } catch (e) {
-      // Mint an ERC1155 by update group member
-      await this.client.group.updateGroupMember({
-        operator: GroupOwner,
-        groupOwner: GroupOwner,
-        groupName: GroupName,
-        membersToAdd: [
-          {
-            expirationTime: toTimestamp(expDate),
-            member: _buyer,
-          },
-        ],
-        membersToDelete: [],
-      })
+      console.error("headGroupMember error", e)
+      try {
+        // Mint an ERC1155 by update group member
+        const tx = await this.client.group.updateGroupMember({
+          operator: GroupOwner,
+          groupOwner: GroupOwner,
+          groupName: GroupName,
+          membersToAdd: [
+            {
+              expirationTime: toTimestamp(expDate),
+              member: _buyer,
+            },
+          ],
+          membersToDelete: [],
+        })
+
+        const info = await tx.simulate({
+          denom: 'BNB',
+        });
+
+        console.log('info', info);
+
+        const txRes = await tx.broadcast({
+          denom: 'BNB',
+          gasLimit: Number(info?.gasLimit),
+          gasPrice: info?.gasPrice || '5000000000',
+          granter: '',
+          payer: this.mainAddress,
+          privateKey: this.privateKey,
+        })
+
+        console.log('txRes', txRes);
+      } catch (e) {
+        console.error("updateGroupMember error", e)
+      }
     }
+    await BenefitApp.findOrCreate({
+      where: { name: `dataSwap User: ${_buyer}` }
+    })
   }
   private async onSend(e: EventData<Contracts["DataSwap"], "Send">) {
     const {_sender, _cid, _title, _content} = e.returnValues;
@@ -96,7 +124,8 @@ export class BNBManager extends BaseManager {
 
       await this.send(_sender, _cid.toString(), _title, _content)
     } catch (e) {
-
+      // For test
+      await this.send(_sender, _cid.toString(), _title, _content)
     }
   }
 
@@ -136,8 +165,8 @@ export class BNBManager extends BaseManager {
     const price = await this.dataSwap.methods.tagPrices(cid).call()
     const benefit = BigNumber.from(price).div(addresses.length)
 
-    const bnbPrice = "200" // BNB Price
-    const benefitInUSD = benefit.mul(bnbPrice).div(10e18).toNumber()
+    const bnbPrice = "246" // BNB Price
+    const benefitInUSD = Number(benefit.mul(bnbPrice).toString()) / 10e18
 
     const template = await BenefitEmailTemplate.create({
       appId: app.id, credentialIds: [cid], title, content,

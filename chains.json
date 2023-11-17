@@ -33,5 +33,10 @@
     "url": "https://bsc-dataseed.binance.org/",
     "explorer": "https://bscscan.com",
     "chainId": 56
+  },
+  "bsc-test": {
+    "url": "wss://go.getblock.io/297ecf0aef6b45eb8839f664cd0d9819",
+    "explorer": "https://testnet.bscscan.com",
+    "chainId": 97
   }
 }
