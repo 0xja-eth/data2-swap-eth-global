@@ -7,7 +7,7 @@ COPY . .
 ENV NODE_ENV=test
 
 RUN npm install
-RUN ./node_modules/typescript/bin/tsc -p ./tsconfig.json
+#RUN ./node_modules/typescript/bin/tsc -p ./tsconfig.json
 
 EXPOSE 3070
 
