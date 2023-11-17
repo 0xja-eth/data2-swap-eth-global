@@ -13,6 +13,7 @@ import {BenefitEmailTemplate} from "../benefit/models/BenefitEmailTemplate";
 import {benefitMgr} from "../benefit/BenefitManager";
 
 import TestData from "./test-data.json"
+import {Event, onEvent} from "./EventManager";
 
 const RPCUrl = 'https://gnfd-testnet-fullnode-tendermint-ap.bnbchain.org'
 const ChainId = '5600'
@@ -56,77 +57,36 @@ export class D2SManager extends BaseManager {
     super.onReady();
 
     this.dataSwap = getContract("DataSwap")
-
-    this.registerEventListener();
-  }
-  private registerEventListener() {
-    this.dataSwap.events.Buy(
-      {}, async (err, event) => {
-        if (!event) return console.error(err);
-        console.log("onBuy", event)
-        await this.onBuy(event);
-      })
-    this.dataSwap.events.Send(
-      {}, async (err, event) => {
-        if (!event) return console.error(err);
-        console.log("onSend", event)
-        await this.onSend(event);
-      })
   }
 
-  private async onBuy(e: EventData<Contracts["DataSwap"], "Buy">) {
-    const {_buyer, _cid, _count} = e.returnValues;
+  @onEvent("Buy")
+  private async _onBuy(e: Event<Contracts["DataSwap"], "Buy">) {
+    await d2sMgr().onBuy(e)
+  }
+  private async onBuy(e: Event<Contracts["DataSwap"], "Buy">) {
+    const {_buyer, _cid, _count} = e;
     if (Number(_count) < 0) return
 
     await BenefitApp.findOrCreate({
       where: { name: `dataSwap User: ${_buyer}` }
     })
   }
-  private async onSend(e: EventData<Contracts["DataSwap"], "Send">) {
-    const {_sender, _cid, _title, _content} = e.returnValues;
-
-    try {
-      const member = await this.client.group.headGroupMember(GroupName, GroupOwner, _sender)
-      if (member?.groupMember?.member != _sender) throw new Error("Not in group")
-
-      await this.send(_sender, _cid.toString(), _title, _content)
-    } catch (e) {
-      // For test
-      await this.send(_sender, _cid.toString(), _title, _content)
-    }
+  @onEvent("Send")
+  private async _onSend(e: Event<Contracts["DataSwap"], "Send">) {
+    await d2sMgr().onSend(e)
+  }
+  private async onSend(e: Event<Contracts["DataSwap"], "Send">) {
+    const {_sender, _cid, _title, _content} = e;
+    await this.send(_sender, _cid.toString(), _title, _content)
   }
 
   public async send(sender: string, cid: string, title: string, content: string) {
-    const expDate = new Date(Date.now() + DateUtils.Minute)
-
     const app = await BenefitApp.findOne({
       where: { name: `dataSwap User: ${sender}` }
     })
 
-    let data: {[K: string]: string[]}
-    try {
-      const url = await this.client.object.getObjectPreviewUrl(
-        {
-          bucketName: BucketName,
-          objectName: ObjectName,
-          queryMap: {
-            view: '1',
-            'X-Gnfd-User-Address': sender,
-            'X-Gnfd-App-Domain': window.location.origin,
-            'X-Gnfd-Expiry-Timestamp': expDate.toISOString(),
-          },
-        },
-        {
-          type: 'EDDSA',
-          address: sender,
-          domain: window.location.origin,
-          seed: `0x${MathUtils.randomString(130, "0123456789abcedf")}`
-        },
-      )
-      data = await GetData({url})
-    } catch (e) {
-      data = TestData
-    }
+    let data: {[K: string]: string[]} = TestData
+
     const addresses = data[cid];
 
     const price = await this.dataSwap.methods.tagPrices(cid).call()

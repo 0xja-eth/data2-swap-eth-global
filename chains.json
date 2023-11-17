@@ -38,5 +38,15 @@
     "url": "wss://go.getblock.io/297ecf0aef6b45eb8839f664cd0d9819",
     "explorer": "https://testnet.bscscan.com",
     "chainId": 97
+  },
+  "scroll": {
+    "url": "https://rpc.scroll.io",
+    "explorer": "https://scrollscan.com",
+    "chainId": 534352
+  },
+  "scroll-test": {
+    "url": "https://sepolia-rpc.scroll.io",
+    "explorer": "https://sepolia.scrollscan.com",
+    "chainId": 534351
   }
 }
