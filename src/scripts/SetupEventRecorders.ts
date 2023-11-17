@@ -1,4 +1,3 @@
-import {GID, GSlug, GVersion} from "../modules/d2s/EventManager";
 
 process.env["SCRIPT"] = "true";
 
@@ -25,4 +24,5 @@ app().start()
   .then(doScript)
   .then(() => process.exit(0));
 
+import {GID, GSlug, GVersion} from "../modules/d2s/EventManager";
 import {EventRecorder} from "../modules/d2s/EventRecorder";

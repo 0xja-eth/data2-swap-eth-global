@@ -2,25 +2,19 @@ import {BaseModel, DateTimeColumn, EnumColumn, JSONColumn} from "../../sequelize
 import {model} from "../../sequelize/SequelizeManager";
 import {snowflakeModel} from "../../sequelize/snowflake/Snowflake";
 import {AllowNull, Column, DataType, Default, PrimaryKey, Table} from "sequelize-typescript";
-import { Rule } from "../data/ScanWorks";
-import {bucketMgr} from "../../aws/bucket/Bucket";
-import {scanMgr} from "../ScanManager";
 
-export enum CredentialState {
+export enum TagState {
   Active = "Active",
   Hidden = "Hidden"
-}
-export enum CredentialPriority {
-  RealTime, Normal, Lazy
 }
 
 @model
 @snowflakeModel
 @Table({
   freezeTableName: true,
-  modelName: "Credential"
+  modelName: "Tag"
 })
-export class Credential extends BaseModel {
+export class Tag extends BaseModel {
 
   @PrimaryKey
   @Column(DataType.BIGINT)
@@ -32,16 +26,12 @@ export class Credential extends BaseModel {
   @Column(DataType.STRING(256))
   curator!: string;
 
+  @Column(DataType.STRING(256))
+  description!: string;
+
   @Default(10)
   @Column(DataType.INTEGER)
   dataPower!: number;
-
-  @Default(0)
-  @Column(DataType.INTEGER)
-  expiredTime: number // Address过期时间（毫秒），0表示静态
-
-  @DateTimeColumn
-  lastScanTime: number // 上次扫描时间
 
   @AllowNull
   @JSONColumn("long")
@@ -50,29 +40,21 @@ export class Credential extends BaseModel {
   @Column(DataType.STRING(256))
   addressesRoot: string;
 
-  // @JSONColumn("long")
-  // public get addresses() {
-  //   return JSON.parse(bucketMgr().getFile(this.id))
-  // };
-  // public set addresses(val: string[]) {
-  //
-  // };
-
-  @Default(CredentialPriority.Normal)
-  @Column(DataType.INTEGER)
-  priority: CredentialPriority
-
   @AllowNull(false)
-  @Default(CredentialState.Active)
-  @EnumColumn(CredentialState)
-  state: CredentialState
-
-  public toJSON(toFrontend = true) {
-    const res = super.toJSON();
-    if (toFrontend) {
-      const rules = res.rules.map(rule => scanMgr().rule2Frontend(rule));
-      return { ...res, rules }
-    }
-    return res;
-  }
+  @Default(TagState.Active)
+  @EnumColumn(TagState)
+  state: TagState
 }
+
+export type ValueCompare = "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "notin"
+
+/**
+ * 提交字段
+ **/
+export type Rule = {
+  groupName: string
+
+  // timestamp?: number
+  value?: number | number[]
+  compare?: ValueCompare
+};

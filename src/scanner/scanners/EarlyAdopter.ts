@@ -16,6 +16,6 @@ export default async function(se: ScannerEnvironment): Promise<[RID, number][]> 
 
   const relations = await Promise.all(rClasses.map(clazz => clazz.findAll()))
   return relations.flat().map(
-    r => [r.toRID(), users.findIndex(u => u.id = r.userId) + 1]
+    r => [r.toRID(), users.findIndex(u => u.id == r.userId) + 1]
   )
 }

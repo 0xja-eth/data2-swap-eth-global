@@ -4,9 +4,9 @@ import {auth, AuthType, Payload} from "./AuthManager";
 import {CodeType, userMgr} from "./UserManager";
 import {BaseError, ExistError, NotFoundError} from "../http/utils/ResponseUtils";
 import {User} from "./models/User";
-import {Op} from "sequelize";
 import {web3BioMgr} from "./Web3Bio";
 import {relationRegister} from "./processors/RelationProcessor";
+import {UserTag, UserTagState} from "../tag/models/UserTag";
 
 @route("/user")
 export class UserInterface extends BaseInterface {
@@ -15,18 +15,12 @@ export class UserInterface extends BaseInterface {
   @auth(AuthType.Normal, false)
   async login(@custom("auth") _auth: Payload) {
     const {type, id, params} = _auth;
-    // if (!params.commitment) throw new NotFoundError("commitment")
 
     const {user, relations} = type == RelationType.Address &&
       await userMgr().loginByMintAddress(id) || await userMgr().loginByRelation(type, id);
-    const userCredentials = await UserCredential.findAll({
+    const userCredentials = await UserTag.findAll({
       where: {userId: user.id}
     })
-
-    console.log("[login] Scan", JSON.stringify(relations))
-    // await scanMgr().scanForRelation(relations, CredentialPriority.RealTime)
-    //   .then(() => console.log("[scanForRelation] success for login", JSON.stringify(relations)))
-    //   .catch(e => console.error("[scanForRelation] error for login", JSON.stringify(relations), e));
 
     return { user, relations, userCredentials }
   }
@@ -41,11 +35,6 @@ export class UserInterface extends BaseInterface {
     const {user} = _auth;
 
     const relation = await userMgr().bindRelation(user.id, type, params);
-
-    console.log("[bindRelation] Scan", JSON.stringify(relation))
-    // await scanMgr().scanForRelation(relation, CredentialPriority.RealTime)
-    //   .then(() => console.log("[scanForRelation] success for bindRelation", JSON.stringify(relation)))
-    //   .catch(e => console.error("[scanForRelation] error for bindRelation", JSON.stringify(relation), e));
 
     if (params?.params?.commitment)
       await userMgr().registerCommitment(relation, params.params.commitment)
@@ -119,8 +108,9 @@ export class UserInterface extends BaseInterface {
 
     await userMgr().isNewEmail(email, true)
 
-    if (await userMgr().verifyCode(CodeType.Bind, email, code))
-      throw new BaseError(601, "Code not correct")
+    // TODO: 暂时不验证
+    // if (await userMgr().verifyCode(CodeType.Bind, email, code))
+    //   throw new BaseError(601, "Code not correct")
 
     if (_auth.user.email == email) return;
 
@@ -131,22 +121,22 @@ export class UserInterface extends BaseInterface {
     await _auth.user.save();
   }
 
-  // @post("/credential/:id")
-  // @auth(AuthType.Normal)
-  // async updateCredential(
-  //   @params("id") id: string,
-  //   @body("state") state: UserCredentialState,
-  //   @custom("auth") _auth: Payload
-  // ) {
-  //   const { id: userId } = _auth.user
-  //   const [uCredential] = await UserCredential.findOrCreate({
-  //     where: {userId, credentialId: id}
-  //   })
-  //   uCredential.state = state;
-  //   await uCredential.save();
-  //
-  //   return {
-  //     userCredentials: await UserCredential.findAll({ where: {userId} })
-  //   }
-  // }
+  @post("/credential/:id")
+  @auth(AuthType.Normal)
+  async updateUserTagState(
+    @params("id") id: string,
+    @body("state") state: UserTagState,
+    @custom("auth") _auth: Payload
+  ) {
+    const { id: userId } = _auth.user
+    const [uTag] = await UserTag.findOrCreate({
+      where: {userId, tagId: id}
+    })
+    uTag.state = state;
+    await uTag.save();
+
+    return {
+      userCredentials: await UserTag.findAll({ where: {userId} })
+    }
+  }
 }
