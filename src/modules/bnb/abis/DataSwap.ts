@@ -12,6 +12,12 @@ const ABIData = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "_buyer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "_cid",
         "type": "uint256"
@@ -30,6 +36,37 @@ const ABIData = [
       }
     ],
     "name": "Buy",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "_cid",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "_title",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "_content",
+        "type": "string"
+      }
+    ],
+    "name": "Send",
     "type": "event"
   },
   {
@@ -103,6 +140,29 @@ const ABIData = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_cid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_title",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_content",
+        "type": "string"
+      }
+    ],
+    "name": "send",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_gov",
         "type": "address"
@@ -153,9 +213,9 @@ const ABIData = [
 ] as const;
 
 declare module "../../web3/ethereum/core/ContractFactory" {
-    interface Contracts {
-        [Name]: typeof ABIData
-    }
+  interface Contracts {
+    [Name]: typeof ABIData
+  }
 }
 
 addContract(Name, ABIData);
