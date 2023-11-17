@@ -13,11 +13,13 @@ import {BenefitApp} from "../benefit/models/BenefitApp";
 import {BenefitEmailTemplate} from "../benefit/models/BenefitEmailTemplate";
 import {benefitMgr} from "../benefit/BenefitManager";
 
+import TestData from "./test-data.json"
+
 const RPCUrl = 'https://gnfd-testnet-fullnode-tendermint-ap.bnbchain.org'
 const ChainId = '5600'
 
 const BucketName = "d2c-test-data"
-const ObjectName = "test-data.json"
+const ObjectName = "test-data2.json"
 const GroupName = "dm_b_d2c-test-data"
 const GroupOwner = "0xCAEbD06d75b5F8C77A73DF27AB56964CCc64f793"
 
@@ -105,25 +107,30 @@ export class BNBManager extends BaseManager {
       where: { name: `dataSwap User: ${sender}` }
     })
 
-    const url = await this.client.object.getObjectPreviewUrl(
-      {
-        bucketName: BucketName,
-        objectName: ObjectName,
-        queryMap: {
-          view: '1',
-          'X-Gnfd-User-Address': sender,
-          'X-Gnfd-App-Domain': window.location.origin,
-          'X-Gnfd-Expiry-Timestamp': expDate.toISOString(),
+    let data: {[K: string]: string[]}
+    try {
+      const url = await this.client.object.getObjectPreviewUrl(
+        {
+          bucketName: BucketName,
+          objectName: ObjectName,
+          queryMap: {
+            view: '1',
+            'X-Gnfd-User-Address': sender,
+            'X-Gnfd-App-Domain': window.location.origin,
+            'X-Gnfd-Expiry-Timestamp': expDate.toISOString(),
+          },
         },
-      },
-      {
-        type: 'EDDSA',
-        address: sender,
-        domain: window.location.origin,
-        seed: `0x${MathUtils.randomString(130, "0123456789abcedf")}`
-      },
-    )
-    const data: {[K: string]: string[]} = await GetData({url})
+        {
+          type: 'EDDSA',
+          address: sender,
+          domain: window.location.origin,
+          seed: `0x${MathUtils.randomString(130, "0123456789abcedf")}`
+        },
+      )
+      data = await GetData({url})
+    } catch (e) {
+      data = TestData
+    }
     const addresses = data[cid];
 
     const price = await this.dataSwap.methods.tagPrices(cid).call()
