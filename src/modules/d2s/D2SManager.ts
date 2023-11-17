@@ -3,11 +3,10 @@ import {BaseManager, getManager, manager} from "../../app/ManagerContext";
 import {ContractOf, Contracts, getContract} from "../web3/ethereum/core/ContractFactory";
 import {EventData} from "../web3/ethereum/core/Contract";
 import {DateUtils} from "../../utils/DateUtils";
-import {get} from "../http/NetworkManager";
+import {get, Itf, post} from "../http/NetworkManager";
 import {MathUtils} from "../../utils/MathUtils";
 import {Op} from "sequelize";
 import {User} from "../user/models/User";
-import {resendMgr} from "../email/resend/ResendManager";
 import {BigNumber} from "ethers";
 import {BenefitApp} from "../benefit/models/BenefitApp";
 import {BenefitEmailTemplate} from "../benefit/models/BenefitEmailTemplate";
@@ -23,17 +22,25 @@ const ObjectName = "test-data2.json"
 const GroupName = "dm_b_d2c-test-data"
 const GroupOwner = "0xCAEbD06d75b5F8C77A73DF27AB56964CCc64f793"
 
-// const Host = "https://gnfd-testnet-sp1.nodereal.io"
-const GetData = get<{url: string}, any>("", ":url")
+const Host = "https://api.studio.thegraph.com/query"
+
+export function subGraphStudioQuery<O>(id, slug, version): Itf<string, O> {
+  return query => post<{query: string}, O>(Host, `/${id}/${slug}/${version}`)({query})
+}
+
+const D2CQueryId = "45027"
+const D2CQuerySlug = "data2-cash-scroll"
+const D2CQueryVersion = "v0.0.1"
+const D2CQuery = subGraphStudioQuery(D2CQueryId, D2CQuerySlug, D2CQueryVersion)
 
 const ExpirationDuration = 7 * DateUtils.Day
 
-export function bnbMgr() {
-  return getManager(BNBManager)
+export function d2sMgr() {
+  return getManager(D2SManager)
 }
 
 @manager
-export class BNBManager extends BaseManager {
+export class D2SManager extends BaseManager {
   public client = Client.create(RPCUrl, ChainId);
 
   public dataSwap: ContractOf<"DataSwap">
@@ -71,48 +78,6 @@ export class BNBManager extends BaseManager {
     const {_buyer, _cid, _count} = e.returnValues;
     if (Number(_count) < 0) return
 
-    const expDate = new Date(Date.now() + ExpirationDuration)
-
-    try {
-      const member = await this.client.group.headGroupMember(GroupName, GroupOwner, _buyer)
-      if (member?.groupMember?.member != _buyer) throw new Error("Not in group")
-    } catch (e) {
-      console.error("headGroupMember error", e)
-      try {
-        // Mint an ERC1155 by update group member
-        const tx = await this.client.group.updateGroupMember({
-          operator: GroupOwner,
-          groupOwner: GroupOwner,
-          groupName: GroupName,
-          membersToAdd: [
-            {
-              expirationTime: toTimestamp(expDate),
-              member: _buyer,
-            },
-          ],
-          membersToDelete: [],
-        })
-
-        const info = await tx.simulate({
-          denom: 'BNB',
-        });
-
-        console.log('info', info);
-
-        const txRes = await tx.broadcast({
-          denom: 'BNB',
-          gasLimit: Number(info?.gasLimit),
-          gasPrice: info?.gasPrice || '5000000000',
-          granter: '',
-          payer: this.mainAddress,
-          privateKey: this.privateKey,
-        })
-
-        console.log('txRes', txRes);
-      } catch (e) {
-        console.error("updateGroupMember error", e)
-      }
-    }
     await BenefitApp.findOrCreate({
       where: { name: `dataSwap User: ${_buyer}` }
     })
@@ -167,8 +132,8 @@ export class BNBManager extends BaseManager {
     const price = await this.dataSwap.methods.tagPrices(cid).call()
     const benefit = BigNumber.from(price).div(addresses.length)
 
-    const bnbPrice = "246" // BNB Price
-    const benefitInUSD = Number(benefit.mul(bnbPrice).toString()) / 10e18
+    const ethPrice = "2100" // ETH Price
+    const benefitInUSD = Number(benefit.mul(ethPrice).toString()) / 10e18
 
     const template = await BenefitEmailTemplate.create({
       appId: app.id, credentialIds: [cid], title, content,
