@@ -15,6 +15,7 @@ import {Tag} from "../modules/tag/models/Tag";
 import {getIntersection} from "../utils/ArrayUtils";
 import {ethers} from "ethers";
 import {KVMerkleTree} from "@sismo-core/kv-merkle-tree";
+import {bucketMgr} from "../modules/aws/bucket/Bucket";
 
 export const AddressTreeHeight = 20;
 export const RegistryTreeHeight = 20;
@@ -29,6 +30,11 @@ async function parseArgv() {
     })
     .option('update', {
       alias: 'u',
+      description: 'Update',
+      type: 'boolean',
+      default: false
+    })
+    .option('upload', {
       description: 'Update',
       type: 'boolean',
       default: false
@@ -76,12 +82,16 @@ async function runScanner() {
 
   if (argv.scan) {
     async function scan(name: string) {
+      console.log(`[Scan] Start ${name}`);
+
       const scannerScript = path.join(__dirname, argv.scannerDir, name);
       const { default: _scanFunction } = require(scannerScript);
       const scanFunction = _scanFunction as Scanner
 
       const se = new ScannerEnvironment(name, argv.outputDir)
+      console.log(`[Scan] ScannerEnvironment`, se);
       const result = await scanFunction(se);
+      console.log(`[Scan] Done`, result.length);
 
       const timestamp = Date.now();
       const outputFile = path.join(argv.outputDir, name, `/${timestamp}.json`);
@@ -90,6 +100,8 @@ async function runScanner() {
         fs.mkdirSync(path.join(argv.outputDir, name), { recursive: true });
 
       fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
+
+      console.log(`[Scan] Saved`, outputFile);
     }
 
     if (argv.name) await scan(argv.name);
@@ -107,10 +119,10 @@ async function runScanner() {
     const poseidon = await getPoseidon();
 
     function update(tag: Tag) {
-      console.log(`[UpdateTag] ${tag.id} ${tag.name}`, tag.rules);
+      console.log(`[Update] ${tag.id} ${tag.name}`, tag.rules);
 
       const ridGroup = tag.rules.map(rule => {
-        const groupPath = path.join(__dirname, argv.scannerDir, rule.groupName);
+        const groupPath = path.join(argv.outputDir, rule.groupName);
         // 获取最后的扫描结果
         const files = fs.readdirSync(groupPath)
           .map(file => path.parse(file))
@@ -139,11 +151,11 @@ async function runScanner() {
       const rids = getIntersection(ridGroup)
       tag.addressesRoot = calcAddressRoot(rids);
 
-      console.log(`[UpdateTag] ${tag.id} ${tag.name}`,
+      console.log(`[Update] ${tag.id} ${tag.name}`,
         ridGroup.map(a => a.length), rids.length, tag.addressesRoot);
 
       fs.writeFileSync(
-        path.join(__dirname, argv.outputRootDir, `${tag.addressesRoot}.json`),
+        path.join(argv.outputRootDir, `${tag.addressesRoot}.json`),
         JSON.stringify(rids, null, 2));
 
       return tag.save();
@@ -177,8 +189,30 @@ async function runScanner() {
     }
   }
 
-  if (!argv.scan && !argv.update)
-    console.error('Please specify --scan or --update');
+  if (argv.upload) {
+    async function upload(root?: string) {
+      console.log(`[Upload] ${root}`);
+
+      const rootFile = path.join(argv.outputRootDir, `${root}.json`)
+      const addresses = JSON.parse(fs.readFileSync(rootFile, 'utf-8')) as string[];
+
+      const awsPath = `addressRoots/${root}.json`
+      const data = await bucketMgr().getFile(awsPath)
+      if (!data) {
+        await bucketMgr().uploadFile(awsPath, JSON.stringify(addresses), {
+          ContentType: "application/json"
+        })
+        console.log(`[Upload] ${root} uploaded`);
+      } else console.log(`[Upload] ${root} already exists`);
+      return root;
+    }
+
+    const roots = fs.readdirSync(argv.outputRootDir).map(file => path.parse(file).name);
+    await Promise.all(roots.map(upload));
+  }
+
+  if (!argv.scan && !argv.update && !argv.upload)
+    console.error('Please specify --scan or --update or --upload');
 }
 
 app().start().then(runScanner)
