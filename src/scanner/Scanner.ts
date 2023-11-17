@@ -3,9 +3,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// 假设使用yargs解析命令行参数
 import yargs from 'yargs';
+
 import {Scanner, ScannerEnvironment} from "./ScannerEnvironment";
+import {app} from "../app/App";
 
 async function parseArgv() {
   return yargs
@@ -45,12 +46,10 @@ async function runScanner() {
   const se = new ScannerEnvironment(argv.scan, argv.output)
   const result = await scanFunction(se);
 
-  const jsonResult = result.map(([relation, value]) => [relation.toRID(), value])
-
   const timestamp = Date.now();
   const outputFile = path.join(argv.output, `${argv.scan}/${timestamp}.json`);
 
-  fs.writeFileSync(outputFile, JSON.stringify(jsonResult, null, 2));
+  fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
 }
 
-runScanner().then();
+app().start().then(runScanner);

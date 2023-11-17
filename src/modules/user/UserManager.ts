@@ -12,6 +12,7 @@ import {resendMgr} from "../email/resend/ResendManager";
 import {benefitMgr} from "../benefit/BenefitManager";
 import {StringUtils} from "../../utils/StringUtils";
 import {get} from "../http/NetworkManager";
+import {commitmentMgr} from "./CommitmentManager";
 
 export enum CodeType {
   Bind = "bind"
@@ -148,32 +149,13 @@ export class UserManager extends BaseManager {
   public async registerCommitment(relation: Relation, commitment: string) {
     if (relation.commitment == commitment) return;
 
-    const pushRes = await scanMgr().pushCommitment(relation.id, commitment)
+    const pushRes = await commitmentMgr().push(relation.id, commitment)
 
     relation.commitment = commitment;
     relation.commitmentReceipt = pushRes.commitmentReceipt;
 
     await relation.save();
   }
-
-  // endregion
-
-  // region 早期用户Credential
-
-  // public async addRegisteredCredentials(address: string) {
-  //   console.log("addRegisteredCredentials", address);
-  //   let credentials = await Credential.findAll({where: {rules: null}});
-  //   await Promise.all(credentials
-  //     .filter(c => !c.addresses?.includes(address))
-  //     .map(c => {
-  //       c.addressesRoot = null;
-  //       console.log("ori c.addresses", c.addresses);
-  //       c.addresses ||= [];
-  //       c.addresses = [...c.addresses, address];
-  //       console.log("new c.addresses", c.addresses, [...c.addresses, address]);
-  //       return c.save();
-  //     }));
-  // }
 
   // endregion
 
@@ -223,70 +205,6 @@ export class UserManager extends BaseManager {
     const res = cachedCode != code;
     if (res) await cacheMgr().deleteKV(key);
     return res
-  }
-
-  // endregion
-
-  // region Welcome
-
-  // @schedule("0 0 * * * *")
-  // private async _sendWelcomes() {
-  //   if (!UserConfig().sendWelcome) return;
-  //
-  //   const users = await User.findAll({
-  //     where: {email: {[Op.ne]: null}, welcomeTime: null}
-  //   });
-  //   await userMgr().sendWelcome(users);
-  // }
-  public async sendWelcome(users: User[], forceSend = false, forceBenefit = false) {
-    const emailedUsers = users.filter(u => !!u.email);
-    for (const emailedUser of emailedUsers)
-      await this.sendWelcomeToUser(emailedUser, forceSend, forceBenefit)
-  }
-  private async sendWelcomeToUser(user: User, forceSend = false, forceBenefit = false) {
-    // if (!force && user.welcomeTime) return;
-    console.log(`[SendWelcomeToUser: ${user.id}] Start`, forceSend, forceBenefit)
-
-    if (!user.email || (!forceSend && !forceBenefit && user.welcomeTime && user.welcomeBenefitId))
-      return
-
-    const {dataPower, displayTags} = await scanMgr().getUserDisplayTags(user.id);
-    const tagCount = displayTags.length;
-    const value = Math.round(dataPower * DataPowerCashFactor * 100) / 100;
-
-    if (tagCount <= 0 || value <= 0) return // TODO: 另行处理
-
-    console.log(`[SendWelcomeToUser: ${user.id}] Pass Check`, {
-      dataPower, tagCount, value,
-      welcomeTime: user.welcomeTime,
-      welcomeBenefitId: user.welcomeBenefitId
-    })
-
-    let flag = false;
-    if (forceSend || !user.welcomeTime) {
-      console.log(`[SendWelcomeToUser: ${user.id}] Send Email to ${user.email}`)
-      await resendMgr().sendEmail(EmailType.Welcome, user.email, {
-        tagCount, dataPower, value
-      });
-      // await webPushMgr().sendNotification(user.id, "")
-      user.welcomeTime = Date.now();
-      flag = true
-    }
-    if (forceBenefit || !user.welcomeBenefitId) {
-      console.log(`[SendWelcomeToUser: ${user.id}] Add Benefit`)
-      const {name, link} = UserConfig().app
-      const br = await benefitMgr().addBenefitRecord(
-        user.id, value, "airdrop", name, link, "Onboard")
-      user.welcomeBenefitId = br.id;
-      flag = true
-    }
-    if (flag) {
-      await user.save();
-      console.log(`[SendWelcomeToUser: ${user.id}] Welcome Data`, {
-        welcomeTime: user.welcomeTime,
-        welcomeBenefitId: user.welcomeBenefitId
-      })
-    } else console.log(`[SendWelcomeToUser: ${user.id}] Nothing Updated`)
   }
 
   // endregion

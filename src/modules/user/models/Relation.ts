@@ -31,6 +31,8 @@ export interface IRelation {
   userId?: string
 }
 
+export type RID = `${RelationType}:${string}`;
+
 export abstract class Relation extends BaseModel implements IRelation {
 
   @PrimaryKey
@@ -61,7 +63,14 @@ export abstract class Relation extends BaseModel implements IRelation {
     return relationRegister.getByClazz(this.constructor as ModelCtor<Relation>);
   }
 
-  public toRID() { return `${this.type}:${this.id}`; }
+  public toRID() { return `${this.type}:${this.id}` as RID; }
+
+  public static fromRID(rid: RID) {
+    const [type, id] = rid.split(":");
+    const clazz = relationRegister.getClazz(Number(type) as RelationType);
+    // @ts-ignore
+    return new clazz({id});
+  }
 
   public toJSON() {
     const res = super.toJSON<this & {type: RelationType}>();

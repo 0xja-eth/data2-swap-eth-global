@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {Relation} from "../modules/user/models/Relation";
+import {Relation, RID} from "../modules/user/models/Relation";
 
-export type Scanner = (se: ScannerEnvironment) => Promise<[Relation, number][]>
+export type Scanner = (se: ScannerEnvironment) => Promise<[RID, number][]>
 
 export class ScannerEnvironment {
   name: string
@@ -28,6 +28,18 @@ export class ScannerEnvironment {
         .filter(timestamp => !isNaN(timestamp));
     } catch (error) {
       console.error('读取扫描时间时出错:', error);
+      return [];
+    }
+  }
+
+  public getScanResult(scanTime = Math.max(...this.scanTimes)): [RID, number][] {
+    const latestFile = path.join(this.outputDir, this.name, `${scanTime}.json`);
+
+    try {
+      const data = fs.readFileSync(latestFile, 'utf-8');
+      return JSON.parse(data) as [RID, number][];
+    } catch (error) {
+      console.error('读取最近一次扫描结果时出错:', error);
       return [];
     }
   }

@@ -1,18 +1,21 @@
 import {Address} from "../../modules/user/models/Address";
 import Twitter from "../../modules/user/models/oauth/Twitter";
 import Github from "../../modules/user/models/oauth/Github";
-import {Relation} from "../../modules/user/models/Relation";
+import {Relation, RID} from "../../modules/user/models/Relation";
 import {ScannerEnvironment} from "../ScannerEnvironment";
+import Discord from "../../modules/user/models/oauth/Discord";
+import {ModelStatic} from "sequelize-typescript";
+import {ModelCtor} from "sequelize-typescript/dist/model/model/model";
+import {User} from "../../modules/user/models/User";
 
-const Count = 1000;
+export default async function(se: ScannerEnvironment): Promise<[RID, number][]> {
+  const users = await User.findAll({
+    order: [['createdAt', 'ASC']] // 按创建时间升序排列
+  })
+  const rClasses: ModelCtor<Relation>[] = [Address, Twitter, Github, Discord]
 
-export default async function(se: ScannerEnvironment): Promise<[Relation, number][]> {
-  const addresses = await Address.findAll()
-  const twitters = await Twitter.findAll()
-  const githubs = await Github.findAll()
-
-  const relations = [...addresses, ...twitters, ...githubs] as Relation[]
-  return relations.sort(
-    (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
-  ).slice(0, Count).map((r, i) => [r, i + 1])
+  const relations = await Promise.all(rClasses.map(clazz => clazz.findAll()))
+  return relations.flat().map(
+    r => [r.toRID(), users.findIndex(u => u.id = r.userId) + 1]
+  )
 }

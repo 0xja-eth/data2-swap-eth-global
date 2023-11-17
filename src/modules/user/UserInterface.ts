@@ -129,56 +129,24 @@ export class UserInterface extends BaseInterface {
 
     _auth.user.email = email;
     await _auth.user.save();
-
-    userMgr().sendWelcome([_auth.user])
-      .then(() => console.log("[sendWelcome] success for bindEmail", JSON.stringify(_auth.user)))
-      .catch(e => console.error("[sendWelcome] error for bindEmail", JSON.stringify(_auth.user), e));
   }
 
-  @post("/credential/:id")
-  @auth(AuthType.Normal)
-  async updateCredential(
-    @params("id") id: string,
-    @body("state") state: UserCredentialState,
-    @custom("auth") _auth: Payload
-  ) {
-    const { id: userId } = _auth.user
-    const [uCredential] = await UserCredential.findOrCreate({
-      where: {userId, credentialId: id}
-    })
-    uCredential.state = state;
-    await uCredential.save();
-
-    return {
-      userCredentials: await UserCredential.findAll({ where: {userId} })
-    }
-  }
-
-  @post("/welcome")
-  @auth(AuthType.Super)
-  async sendWelcome(
-    @body("userId", true) userId: string,
-    @body("userIds", true, []) userIds: string[],
-    @body("forceSend", true, false) forceSend: boolean,
-    @body("forceBenefit", true, false) forceBenefit: boolean) {
-    userIds = userId ? [userId] : userIds;
-
-    const where = { id: {[Op.in]: userIds}, email: {[Op.ne]: null} };
-
-    const users = await User.findAll({ where });
-    await userMgr().sendWelcome(users, forceSend, forceBenefit);
-  }
-
-  @post("/welcome/all")
-  @auth(AuthType.Super)
-  async sendAllWelcome(
-    @body("forceSend", true, false) forceSend: boolean,
-    @body("forceBenefit", true, false) forceBenefit: boolean) {
-
-    const users = await User.findAll({
-      where: {email: {[Op.ne]: null}}
-    });
-    await userMgr().sendWelcome(users, forceSend, forceBenefit);
-  }
-
+  // @post("/credential/:id")
+  // @auth(AuthType.Normal)
+  // async updateCredential(
+  //   @params("id") id: string,
+  //   @body("state") state: UserCredentialState,
+  //   @custom("auth") _auth: Payload
+  // ) {
+  //   const { id: userId } = _auth.user
+  //   const [uCredential] = await UserCredential.findOrCreate({
+  //     where: {userId, credentialId: id}
+  //   })
+  //   uCredential.state = state;
+  //   await uCredential.save();
+  //
+  //   return {
+  //     userCredentials: await UserCredential.findAll({ where: {userId} })
+  //   }
+  // }
 }
