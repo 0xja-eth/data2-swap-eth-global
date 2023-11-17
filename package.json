@@ -16,6 +16,9 @@
     "run-prod": "./scripts/build-prod.sh & ./scripts/run-prod.sh",
     "deploy-prod": "./scripts/build-prod.sh & ./scripts/deploy-prod.sh"
   },
+  "bin": {
+    "scanner": "./dist/scanner.js"
+  },
   "jest": {
     "rootDir": "./src",
     "setupFilesAfterEnv": [

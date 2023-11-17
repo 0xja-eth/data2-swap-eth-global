@@ -36,6 +36,7 @@ export class D2SManager extends BaseManager {
       where: { name: `dataSwap User: ${_buyer}` }
     })
   }
+
   @onEvent("Send")
   private async _onSend(e: Event<Contracts["DataSwap"], "Send">) {
     await d2sMgr().onSend(e)
@@ -50,7 +51,7 @@ export class D2SManager extends BaseManager {
       where: { name: `dataSwap User: ${sender}` }
     })
 
-    let data: {[K: string]: string[]} = TestData
+    let data: {[K: string]: string[]} = TestData // TODO: 获取实际数据
 
     const addresses = data[cid];
 
