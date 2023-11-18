@@ -13,12 +13,12 @@ const ScanCorn = "*/5 * * * * *"
 
 const Host = "https://api.studio.thegraph.com/query"
 
-export type Event<T extends ABI = any, Name extends EventNames<T> = any> = {
+export type Event<T extends ABI = any, Name extends EventNames<T> = any, E = {}> = {
   id: string
   blockNumber: string
   blockTimestamp: string
   transactionHash: string
-} & EventValues<T, Name>
+} & EventValues<T, Name> & E
 
 export function subGraphStudioQuery<O>(id, slug, version): Itf<string, {data: O}> {
   return query => post<{query: string}, {data: O}>(Host, `/${id}/${slug}/${version}`)({query})
@@ -77,8 +77,13 @@ export class EventManager extends BaseManager {
     console.log("[scanEvent] query", query)
 
     const queryFunc = subGraphStudioQuery(gid, gSlug, gVersion)
-    const queryRes = await queryFunc(query)
-    const events = queryRes?.data?.[`${eName.toLowerCase()}s`] as Event[]
+    let events: Event[] = []
+    try {
+      const queryRes = await queryFunc(query)
+      events = queryRes?.data?.[`${eName.toLowerCase()}s`] as Event[]
+    } catch (e) {
+      console.error("[scanEvent] error", e)
+    }
 
     if (events.length <= 0) return console.log("[scanEvent] no events")
 

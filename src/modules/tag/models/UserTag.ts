@@ -29,6 +29,9 @@ export class UserTag extends BaseModel {
   @Column(DataType.BIGINT)
   tagId!: string;
 
+  @JSONColumn
+  nullifiers: string[] = [];
+
   @AllowNull(false)
   @Default(UserTagState.Normal)
   @EnumColumn(UserTagState)

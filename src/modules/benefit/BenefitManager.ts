@@ -19,9 +19,9 @@ export class BenefitManager extends BaseManager {
 
   public async sendBenefitEmails(templateId: string, targetUsers: User[], force = false) {
     const template = await BenefitEmailTemplate.findByPk(templateId);
-    const {credentialIds, title, content} = template;
+    const {title, content} = template;
 
-    console.log(`[SendBenefitEmails: ${templateId}] Start`, {credentialIds, title, content})
+    console.log(`[SendBenefitEmails: ${templateId}] Start`, {title, content})
     console.log(`[SendBenefitEmails: ${templateId}] TargetUsers: ${targetUsers.length}`)
 
     if (!force) {

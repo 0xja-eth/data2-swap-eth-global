@@ -47,8 +47,13 @@ async function doScript() {
   const sendResponse = await userAlice.channel.send(
     ["*"], {
     notification: {
-      title: "Hi son",
-      body: "Hi my dear son, I'm your amazing protocol",
+      title: "Our Present: Your $5 Gift Awaits + 10% Yield on Your USDC",
+      body: `Earn 10% Yield on Your USDC
+  By depositing your USDC with us, you'll unlock a remarkable 10% yield, allowing your crypto to work for you. It's a seamless way to grow your assets while enjoying the benefits of decentralized finance.
+
+    We're excited to accompany you on your DeFi journey.
+
+  Best Regards, TheDeFiYieldCompany`,
     },
   });
 

@@ -9,6 +9,8 @@ import {benefitMgr} from "../benefit/BenefitManager";
 
 import {Event, onEvent} from "../theGraph/EventManager";
 import {UserTag, UserTagState} from "../tag/models/UserTag";
+import {getIntersection, groupBy} from "../../utils/ArrayUtils";
+import {cacheable} from "../cache/Cacheable";
 
 export function d2sMgr() {
   return getManager(D2SManager)
@@ -16,66 +18,79 @@ export function d2sMgr() {
 
 @manager
 export class D2SManager extends BaseManager {
-  public dataSwap: ContractOf<"DataSwap">
+  public dataSwap: ContractOf<"Data2Swap">
 
   public onReady() {
     super.onReady();
 
-    this.dataSwap = getContract("DataSwap")
+    this.dataSwap = getContract("Data2Swap")
   }
 
-  @onEvent("Buy")
-  private async _onBuy(e: Event<Contracts["DataSwap"], "Buy">) {
-    await d2sMgr().onBuy(e)
-  }
-  private async onBuy(e: Event<Contracts["DataSwap"], "Buy">) {
-    const {_buyer, _cid, _count} = e;
-    if (Number(_count) < 0) return
+  // @onEvent("Buy")
+  // private async _onBuy(e: Event<Contracts["Data2Swap"], "Buy">) {
+  //   await d2sMgr().onBuy(e)
+  // }
+  // private async onBuy(e: Event<Contracts["Data2Swap"], "Buy">) {
+  //   const {_buyer, _count} = e;
+  //   if (Number(_count) < 0) return
+  //
+  //   await BenefitApp.findOrCreate({
+  //     where: { name: `dataSwap User: ${_buyer}` }
+  //   })
+  // }
 
-    await BenefitApp.findOrCreate({
-      where: { name: `dataSwap User: ${_buyer}` }
-    })
+  @cacheable(Array)
+  public async getTagIds(key: string) {
+    const res: string[] = [];
+    while (true) {
+      try { res[res.length] = await this.dataSwap.methods.keyTagIds(key, res.length).call() }
+      catch (e) { console.log(`getTagIds ${key}, ${res.length} break:`, e); break }
+    }
+    return res
   }
 
   @onEvent("Send")
-  private async _onSend(e: Event<Contracts["DataSwap"], "Send">) {
+  private async _onSend(e: Event<Contracts["Data2Swap"], "Send">) {
     await d2sMgr().onSend(e)
   }
-  private async onSend(e: Event<Contracts["DataSwap"], "Send">) {
-    const {_sender, _cid, _title, _content} = e;
-    await this.send(_sender, _cid.toString(), _title, _content)
+  private async onSend(e: Event<Contracts["Data2Swap"], "Send">) {
+    const {_sender, _key, _title, _content} = e;
+    await this.send(_sender, _key, _title, _content)
   }
 
-  public async send(sender: string, cid: string, title: string, content: string) {
-    const app = await BenefitApp.findOne({
+  public async send(sender: string, key: string, title: string, content: string) {
+    const [app] = await BenefitApp.findOrCreate({
       where: { name: `dataSwap User: ${sender}` }
     })
 
-    // let data: {[K: string]: string[]} = TestData // TODO: 获取实际数据
-
+    const tagIds = await this.getTagIds(key)
     const userTags = await UserTag.findAll({
-      where: {tagId: cid, state: UserTagState.Normal}
+      where: {tagId: {[Op.in]: tagIds}, state: UserTagState.Normal}
     });
-    const userIds = userTags.map(t => t.userId)
+    const userTagGroup = groupBy(userTags, "tagId")
+    const userIdsGroup = Object.values(userTagGroup)
+      .map(uts => uts.map(ut => ut.userId))
+    const userIds = getIntersection(userIdsGroup)
+    // const userIds = userTags.map(t => t.userId)
     const users = await User.findAll({
       where: { id: {[Op.in]: userIds}, mintAddress: {[Op.not]: null}}
     })
     const addresses = users.map(u => u.mintAddress)
 
-    const price = await this.dataSwap.methods.tagPrices(cid).call()
+    const price = await this.dataSwap.methods.getPrice(key).call()
     const benefit = BigNumber.from(price).div(addresses.length)
 
     const ethPrice = "2100" // ETH Price
     const benefitInUSD = Number(benefit.mul(ethPrice).toString()) / 10e18
 
     const template = await BenefitEmailTemplate.create({
-      appId: app.id, credentialIds: [cid], title, content,
+      appId: app.id, credentialIds: tagIds, title, content,
       deliveredReward: benefitInUSD,
     })
 
     // Release benefit
     await this.dataSwap.methods.release({
-      _cid: cid, _addresses: addresses
+      _key: key, _addresses: addresses
     }).quickSend()
 
     const res = await benefitMgr().sendBenefitEmails(template.id, users)

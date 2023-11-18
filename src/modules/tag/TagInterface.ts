@@ -1,35 +1,9 @@
 import {BaseInterface, body, custom, get, params, post, route} from "../http/InterfaceManager";
 import {Tag, TagState} from "./models/Tag";
-import {tagMgr} from "./TagManager";
+import {SnarkProof, tagMgr} from "./TagManager";
 import {auth, AuthType, Payload} from "../user/AuthManager";
-import {SignInfo, SignType} from "../user/SignManager";
+import {SignInfo, signMgr, SignType} from "../user/SignManager";
 import {Relation, RID} from "../user/models/Relation";
-
-type InputPoseidon<T> = string;
-
-type InputCredentialId = string;
-type InputSourceSecret = string;
-type InputSourceSecretHash = InputPoseidon<[InputSourceSecret, 1]> // Commitment
-
-type InputDestinationIdentifier = string;
-type InputCommitmentMapperPubKey = [string, string];
-type InputExternalNullifier = InputCredentialId;
-type InputNullifier = InputPoseidon<
-  [InputSourceSecretHash, InputExternalNullifier]
-  >;
-
-export type SnarkProof = {
-  a: [string, string];
-  b: [[string, string], [string, string]];
-  c: [string, string];
-  // input: string[];
-  input: [
-    InputDestinationIdentifier,
-    ...InputCommitmentMapperPubKey,
-    InputExternalNullifier,
-    InputNullifier
-  ]
-}
 
 @route("/tag")
 export class TagInterface extends BaseInterface {
@@ -78,6 +52,11 @@ export class TagInterface extends BaseInterface {
     @body("tagIds") tagIds: string[],
     @custom("auth") _auth: Payload) {
 
+    signMgr().verifySign(signInfo, false)
+
+    return await tagMgr().mintSBT(
+      signInfo.address, _auth.user, snarkProofs, tagIds
+    )
     // TODO: 重新实现
   }
 

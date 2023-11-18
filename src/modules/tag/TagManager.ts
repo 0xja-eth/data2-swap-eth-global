@@ -10,7 +10,41 @@ import {schedule} from "../../utils/CronUtils";
 import {cacheMgr} from "../cache/CacheManager";
 import {EddsaAccount} from "@sismo-core/crypto";
 import {cacheable} from "../cache/Cacheable";
-import {onEvent} from "../theGraph/EventManager";
+import {Event, onEvent} from "../theGraph/EventManager";
+import {ContractOf, Contracts, getContract} from "../web3/ethereum/core/ContractFactory";
+import {UserTag, UserTagState} from "./models/UserTag";
+import {User} from "../user/models/User";
+import {BaseError} from "../http/utils/ResponseUtils";
+import {addrEq} from "../../utils/AddressUtils";
+import {Op} from "sequelize";
+import {ethereum} from "../web3/ethereum/EthereumManager";
+import {TransactionReceipt} from "web3-core";
+
+type InputPoseidon<T> = string;
+
+type InputCredentialId = string;
+type InputSourceSecret = string;
+type InputSourceSecretHash = InputPoseidon<[InputSourceSecret, 1]> // Commitment
+
+type InputDestinationIdentifier = string;
+type InputCommitmentMapperPubKey = [string, string];
+type InputExternalNullifier = InputCredentialId;
+type InputNullifier = InputPoseidon<
+  [InputSourceSecretHash, InputExternalNullifier]
+  >;
+
+export type SnarkProof = {
+  a: [string, string];
+  b: [[string, string], [string, string]];
+  c: [string, string];
+  // input: string[];
+  input: [
+    InputDestinationIdentifier,
+    ...InputCommitmentMapperPubKey,
+    InputExternalNullifier,
+    InputNullifier
+  ]
+}
 
 export const AddressTreeHeight = 20;
 export const RegistryTreeHeight = 20;
@@ -34,9 +68,12 @@ export class TagManager extends BaseManager {
   public scanResults: {[K: string]: [RID, number][]}
   public rootResults: {[K: string]: string[]}
 
+  public zkProfile: ContractOf<"ZKProfile">
+
   async onStart() {
     super.onStart();
     this.poseidon = await getPoseidon();
+    this.zkProfile = getContract("ZKProfile")
   }
 
   async onReady() {
@@ -173,12 +210,91 @@ export class TagManager extends BaseManager {
     this.rootResults = await cacheMgr().getKV(RootResultKey, Object) as {[K: string]: string[]} || {}
   }
 
+  public async mintSBT(mintAddress: string,
+                       user: User,
+                       snarkProofs: SnarkProof[],
+                       tagIds: string[]) {
+    if (addrEq(user.mintAddress, mintAddress))
+      throw new BaseError(403, "Mint Address Not Match");
+
+    // 检查用户是否已经拥有该标签
+    const userTags = await UserTag.findAll({
+      where: { userId: user.id, tagId: {[Op.in]: tagIds} }
+    });
+
+    const pushSnarkProofs = snarkProofs.filter(p => {
+      let destination = p.input[0], nullifier = p.input[4];
+
+      const destHex = BigNumber.from(destination).toHexString();
+      const destAddress = destHex.slice(0, destHex.length - 20);
+      if (!addrEq(destAddress, user.mintAddress))
+        throw new BaseError(600, "Address not match in snarkProof", {destAddress});
+
+      // 检查nullifier是否已经被使用
+      return userTags.every(ut => !ut.nullifiers.includes(nullifier));
+    });
+
+    console.log("[Mint SBT] pushSnarkProofs", pushSnarkProofs.length, "snarkProofs", snarkProofs.length)
+
+    let tx: TransactionReceipt, txHash = "";
+    if (pushSnarkProofs.length > 0) {
+      try {
+        tx = await this.zkProfile.methods.pushZKProofs({
+          _a: pushSnarkProofs.map(p => p.a),
+          _b: pushSnarkProofs.map(p => p.b),
+          _c: pushSnarkProofs.map(p => p.c),
+          _input: pushSnarkProofs.map(p => p.input)
+        }).quickSend();
+
+        txHash = tx.transactionHash;
+      } catch (e) {
+        console.error("[Mint SBT failed]", e, pushSnarkProofs)
+        throw e;
+      }
+    }
+
+    const tokenIdStr = await this.zkProfile.methods
+      .getTokenIdByAddress({_owner: user.mintAddress}).call();
+    const tokenIdHex = BigNumber.from(tokenIdStr).toHexString().slice(2).toLowerCase();
+
+    if (tokenIdHex == "ffffffffffffffffffff") {
+      console.error("[Mint SBT failed] No TokenId", user.id, txHash)
+      return { tokenId: 0, txHash }
+    }
+    user.sbtId = tokenIdStr
+    user.mintTime = Date.now()
+
+    await user.save()
+    return { tokenId: tokenIdStr, txHash }
+  }
+
   @onEvent("ZKProof")
   private async _onPushZKProof(e) {
     await tagMgr().onPushZKProof(e)
   }
-  private async onPushZKProof(e) {
-    // TODO: 同步ZKP记录
+  private async onPushZKProof(e: Event<Contracts["ZKProfile"], "ZKProof", {
+    _dest: string,
+    _pubKey1: string,
+    _pubKey2: string,
+    _tagId: string,
+    _nullifier: string,
+  }>) {
+    const { _to, _tagId, _nullifier } = e;
+    const user = await User.findOne({ where: { mintAddress: _to } });
+
+    const userTag = await UserTag.findOne({
+      where: { tagId: _tagId, userId: user.id }
+    })
+    if (!userTag)
+      await UserTag.create({
+        tagId: _tagId, userId: user.id, state: UserTagState.Normal,
+        nullifiers: [_nullifier]
+      })
+    else {
+      userTag.state = UserTagState.Normal;
+      userTag.nullifiers = [...(userTag.nullifiers || []), _nullifier];
+      await userTag.save();
+    }
   }
 
   // // region Addresses Storage

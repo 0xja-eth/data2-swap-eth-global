@@ -16,7 +16,7 @@ class AddressProcessor extends BaseRelationProcessor<RelationType.Address> {
       return res
     }
 
-    signMgr().verifySign(params);
+    signMgr().verifySign(params, false);
 
     let res = await this.clazz.findByPk(params.address);
     if (res) {

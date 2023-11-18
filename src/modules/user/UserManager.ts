@@ -44,6 +44,7 @@ export class UserManager extends BaseManager {
    * 根据关系创建用户
    */
   public async createUserByMintAddress(address: string) {
+    await this.isNewRelation(address, RelationType.Address, true)
     return { user: await User.create({ mintAddress: address }) }
   }
 
@@ -58,6 +59,15 @@ export class UserManager extends BaseManager {
     return {user, relations: await this.getUserRelations(user.id)};
   }
 
+  /**
+   * 根据关系获取用户
+   */
+  public async getUserByMintAddress(address, withRelation = true) {
+    const res = await this.findUserByMintAddress(address, withRelation);
+    if (!res) throw new NotFoundError("User");
+
+    return res;
+  }
   // endregion
 
   // region Relation

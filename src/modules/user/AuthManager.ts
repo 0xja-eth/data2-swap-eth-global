@@ -38,9 +38,12 @@ export function auth(type: AuthType = AuthType.Normal,
 
 				res = authMgr().processKey(token);
 
-				if (getUser)
-					res.user = (await userMgr().getUserByRelation(
-						res.type, res.id, false)).user;
+				if (getUser) {
+					if (res.type == RelationType.Address)
+						res.user = (await userMgr().findUserByMintAddress(res.id, false))?.user;
+					if (!res.user)
+						res.user = (await userMgr().getUserByRelation(res.type, res.id, false)).user;
+				}
 			} catch (e) {
 				if (throw_) throw e;
 				else console.error("Auth error: ", e);
