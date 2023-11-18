@@ -33,8 +33,18 @@ export class UserManager extends BaseManager {
   /**
    * 根据关系登陆
    */
-  public async loginByMintAddress(address: string) {
-    return await this.findUserByMintAddress(address)
+  public async loginByMintAddress(address: string): Promise<{
+    user: User, relations?: Relation[]
+  }> {
+    return await this.findUserByMintAddress(address) ||
+      await this.createUserByMintAddress(address)
+  }
+
+  /**
+   * 根据关系创建用户
+   */
+  public async createUserByMintAddress(address: string) {
+    return { user: await User.create({ mintAddress: address }) }
   }
 
   /**

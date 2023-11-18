@@ -5,7 +5,7 @@ import {BaseManager, getManager, manager} from "../../app/ManagerContext";
 import {BaseError} from "../http/utils/ResponseUtils";
 import {RelationType} from "./models/Relation";
 
-export type SignType = "login" | "bind" | "scan" | "zkproof" | "mint"
+export type SignType = "login" | "bind" | "zkproof"
 export type SignInfo = { address: string, type: SignType, params: {timestamp: string} & any, signature: string };
 
 export function signMgr() {
@@ -16,14 +16,7 @@ export function signMgr() {
 class SignManager extends BaseManager {
 
 	public getData2Sign(address: string, type: SignType) {
-		switch (type) {
-			// case "login":
-			case "bind":
-			case "zkproof":
-				return `You (${address}) are requesting to ${type}, timestamp is {timestamp}, secret commitment: {commitment}`;
-			default:
-				return `You (${address}) are requesting to ${type}, timestamp is {timestamp}`;
-		}
+		return `You (${address}) are requesting to ${type}, timestamp is {timestamp}`;
 	}
 	public verifySign({address, params, type, signature}: SignInfo, key = true) {
 		let data = this.getData2Sign(address, type);

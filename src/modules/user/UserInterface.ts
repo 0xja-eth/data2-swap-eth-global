@@ -10,6 +10,14 @@ import {UserTag, UserTagState} from "../tag/models/UserTag";
 import {tagMgr} from "../tag/TagManager";
 import {BigNumber} from "ethers";
 import {commitmentMgr} from "./CommitmentManager";
+import {SignInfo} from "./SignManager";
+
+export interface AuthSig {
+  sig: any;
+  derivedVia: "web3.eth.personal.sign";
+  signedMessage: string;
+  address: string;
+}
 
 @route("/user")
 export class UserInterface extends BaseInterface {
@@ -20,49 +28,39 @@ export class UserInterface extends BaseInterface {
     const {type, id, params} = _auth;
 
     const {user, relations} = type == RelationType.Address &&
-      await userMgr().loginByMintAddress(id) || await userMgr().loginByRelation(type, id);
-    const userCredentials = await UserTag.findAll({
+      await userMgr().loginByMintAddress(id);
+    const userTags = await UserTag.findAll({
       where: {userId: user.id}
     })
 
-    return { user, relations, userCredentials }
+    return { user, relations, userTags }
   }
 
-  @put("/relation")
+  @put("/address")
   @auth(AuthType.Normal)
-  async bindRelation(
-    @body("type") type: RelationType,
-    @body("params") params: any,
+  async bindAddress(
+    @body("signInfo") signInfo: SignInfo,
     // @body("updateCommitment", true) updateCommitment: boolean,
     @custom("auth") _auth: Payload) {
     const {user} = _auth;
 
-    const relation = await userMgr().bindRelation(user.id, type, params);
+    const relation = await userMgr().bindRelation(user.id, RelationType.Address, signInfo);
+    const web3BioRelations = await web3BioMgr().syncWeb3Bios(user.id, relation.id)
 
-    if (params?.params?.commitment)
-      await userMgr().registerCommitment(relation, params.params.commitment)
+    await tagMgr().scanForRelations([relation, ...web3BioRelations])
 
-    if (type == RelationType.Address) {
-      const web3BioRelations = await web3BioMgr().syncWeb3Bios(user.id, relation.id)
-
-      await tagMgr().scanForRelations([relation, ...web3BioRelations])
-
-      return { relation, web3BioRelations };
-    }
-    await tagMgr().scanForRelations([relation])
-
-    return { relation };
+    return { relation, web3BioRelations };
   }
 
-  @del("/relation")
-  @auth(AuthType.Normal)
-  async unbindRelation(
-    @body("type") type: RelationType,
-    @body("id", true) id: string,
-    @custom("auth") _auth: Payload) {
-    const {user} = _auth;
-    await userMgr().unbindRelation(user.id, type, id);
-  }
+  // @del("/relation")
+  // @auth(AuthType.Normal)
+  // async unbindRelation(
+  //   @body("type") type: RelationType,
+  //   @body("id", true) id: string,
+  //   @custom("auth") _auth: Payload) {
+  //   const {user} = _auth;
+  //   await userMgr().unbindRelation(user.id, type, id);
+  // }
 
   @put("/commitment")
   @auth(AuthType.Normal)
@@ -135,16 +133,16 @@ export class UserInterface extends BaseInterface {
     await _auth.user.save();
   }
 
-  @post("/tag/:id")
+  @post("/tag/:tagId")
   @auth(AuthType.Normal)
   async updateUserTagState(
-    @params("id") id: string,
+    @params("tagId") tagId: string,
     @body("state") state: UserTagState,
     @custom("auth") _auth: Payload
   ) {
     const { id: userId } = _auth.user
     const [uTag] = await UserTag.findOrCreate({
-      where: {userId, tagId: id}
+      where: {userId, tagId}
     })
     uTag.state = state;
     await uTag.save();

@@ -101,7 +101,7 @@ export class TagManager extends BaseManager {
 
   public async updateTags() {
     const tags = await Tag.findAll({
-      where: { state: TagState.Active }
+      where: { zkEnable: true, state: TagState.Active }
     });
     return Promise.all(tags.map(tag => this.updateTag(tag)));
   }

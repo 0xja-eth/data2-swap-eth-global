@@ -38,9 +38,9 @@ export class Tag extends BaseModel {
   @Column(DataType.BOOLEAN)
   zkEnable!: boolean;
 
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  dynamic!: boolean; // 动态标签
+  // @Default(false)
+  // @Column(DataType.BOOLEAN)
+  // dynamic!: boolean; // 动态标签
 
   @AllowNull
   @JSONColumn("long")
