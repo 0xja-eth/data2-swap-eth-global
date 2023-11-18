@@ -35,20 +35,22 @@ export type SnarkProof = {
 export class TagInterface extends BaseInterface {
 
   @get("/tags")
-  async tags() {
+  async getTags() {
     return await Tag.findAll({
       where: {state: TagState.Active}
     });
   }
   @get("/scanResult")
-  async scanResult() {
+  async getScanResult() {
     return { rootResults: tagMgr().rootResults }
   }
-
-  @post("/tags/update")
-  async updateTags() {
-    await tagMgr().updateTags()
+  @get("/registryRoot")
+  async getRegistryRoot() {
+    return tagMgr().getRegistryRoot();
   }
+
+  // Admin
+
   @post("/scan")
   async scan(
     @body("rids", true) rids: RID[]
@@ -63,10 +65,9 @@ export class TagInterface extends BaseInterface {
     const relation = Relation.fromRID(rid)
     await tagMgr().scanForRelations([relation])
   }
-
-  @get("/registryRoot")
-  async getRegistryRoot() {
-    return tagMgr().getRegistryRoot();
+  @post("/tags/update")
+  async updateTags() {
+    await tagMgr().updateTags()
   }
 
   @post("/mint")
