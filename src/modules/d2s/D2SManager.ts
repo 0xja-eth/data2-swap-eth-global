@@ -9,6 +9,7 @@ import {benefitMgr} from "../benefit/BenefitManager";
 
 import TestData from "./test-data.json"
 import {Event, onEvent} from "./EventManager";
+import {UserTag, UserTagState} from "../tag/models/UserTag";
 
 export function d2sMgr() {
   return getManager(D2SManager)
@@ -51,9 +52,16 @@ export class D2SManager extends BaseManager {
       where: { name: `dataSwap User: ${sender}` }
     })
 
-    let data: {[K: string]: string[]} = TestData // TODO: 获取实际数据
+    // let data: {[K: string]: string[]} = TestData // TODO: 获取实际数据
 
-    const addresses = data[cid];
+    const userTags = await UserTag.findAll({
+      where: {tagId: cid, state: UserTagState.Normal}
+    });
+    const userIds = userTags.map(t => t.userId)
+    const users = await User.findAll({
+      where: { id: {[Op.in]: userIds}, mintAddress: {[Op.not]: null}}
+    })
+    const addresses = users.map(u => u.mintAddress)
 
     const price = await this.dataSwap.methods.tagPrices(cid).call()
     const benefit = BigNumber.from(price).div(addresses.length)
@@ -71,7 +79,6 @@ export class D2SManager extends BaseManager {
       _cid: cid, _addresses: addresses
     }).quickSend()
 
-    const users = await User.findAll({where: {mintAddress: {[Op.in]: addresses}}})
     const res = await benefitMgr().sendBenefitEmails(template.id, users)
 
     console.log("sendBenefitEmails", res)

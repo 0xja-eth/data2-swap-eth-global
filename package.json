@@ -6,18 +6,13 @@
   "scripts": {
     "compile": "tsc",
     "node": "tsc & node ./dist/index.js",
-
     "scan": "tsc & tag-kit --scan",
     "update": "tsc & tag-kit --update",
-
     "compile-scripts": "tsc -p script-tsconfig.json",
-
     "sync-sequelize": "npm run compile-scripts & node ./dist/scripts/scripts/SyncSequelize.js",
     "setup-general-tags": "npm run compile-scripts & node ./dist/scripts/scripts/SetupGeneralTags.js",
     "setup-event-recorders": "npm run compile-scripts & node ./dist/scripts/scripts/SetupEventRecorders.js",
-
     "push-test": "npm run compile-scripts & node ./dist/scripts/scripts/PushTest.js",
-
     "build-test": "./scripts/build-test.sh",
     "run-test": "./scripts/build-test.sh & ./scripts/run-test.sh",
     "deploy-test": "./scripts/build-test.sh & ./scripts/deploy-test.sh",
@@ -66,6 +61,7 @@
     "@sismo-core/crypto": "^1.2.0",
     "@sismo-core/kv-merkle-tree": "^1.1.1",
     "async-mutex": "^0.3.2",
+    "aws-sdk": "^2.1181.0",
     "dotenv": "^16.0.1",
     "ethers": "5.7.2",
     "fetch": "^1.1.0",

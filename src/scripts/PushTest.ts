@@ -45,10 +45,10 @@ async function doScript() {
 
   // Send notification, provided userAlice has a channel
   const sendResponse = await userAlice.channel.send(
-    ["0x10fa00823D930bD4aB3592CdeD68D830da652D22"], {
+    ["*"], {
     notification: {
       title: "Hi son",
-      body: "from your amazing protocol",
+      body: "Hi my dear son, I'm your amazing protocol",
     },
   });
 
