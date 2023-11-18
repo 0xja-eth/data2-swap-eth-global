@@ -20,8 +20,8 @@ export type Event<T extends ABI = any, Name extends EventNames<T> = any> = {
   transactionHash: string
 } & EventValues<T, Name>
 
-export function subGraphStudioQuery<O>(id, slug, version): Itf<string, O> {
-  return query => post<{query: string}, O>(Host, `/${id}/${slug}/${version}`)({query})
+export function subGraphStudioQuery<O>(id, slug, version): Itf<string, {data: O}> {
+  return query => post<{query: string}, {data: O}>(Host, `/${id}/${slug}/${version}`)({query})
 }
 
 export function onEvent(name: string) {
@@ -63,20 +63,22 @@ export class EventManager extends BaseManager {
     if (!this.callbacks[recorder.id]) return
 
     const {gid, gSlug, gVersion, eName, fields, scannedBlockNumber} = recorder
-    const query = `${eName.toLowerCase()}s(
-  where: {blockNumber_gt: "${scannedBlockNumber}"}
-) {
-  id
-  blockNumber
-  blockTimestamp
-  transactionHash
-  ${fields.map(f => f).join("\n")}
+    const query = `{
+  ${eName.toLowerCase()}s(
+    where: {blockNumber_gt: "${scannedBlockNumber}"}
+  ) {
+    id
+    blockNumber
+    blockTimestamp
+    transactionHash
+    ${fields.map(f => f).join("\n")}
+  }
 }`
     console.log("[scanEvent] query", query)
 
     const queryFunc = subGraphStudioQuery(gid, gSlug, gVersion)
     const queryRes = await queryFunc(query)
-    const events = queryRes?.[`${eName.toLowerCase()}s`] as Event[]
+    const events = queryRes?.data?.[`${eName.toLowerCase()}s`] as Event[]
 
     if (events.length <= 0) return console.log("[scanEvent] no events")
 

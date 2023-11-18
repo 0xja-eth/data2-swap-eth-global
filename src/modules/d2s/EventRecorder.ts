@@ -30,12 +30,12 @@ export class EventRecorder extends BaseModel {
   @Column(DataType.BOOLEAN)
   enabled?: boolean;
 
-  public get gid() { return this.id.split("-")[0] }
-  public get gSlug() { return this.id.split("-")[1] }
-  public get gVersion() { return this.id.split("-")[2] }
-  public get eName() { return this.id.split("-")[3] }
+  public get gid() { return this.id.split(":")[0] }
+  public get gSlug() { return this.id.split(":")[1] }
+  public get gVersion() { return this.id.split(":")[2] }
+  public get eName() { return this.id.split(":")[3] }
 
   public static makeId(gid: number | string, gSlug: string, gVersion: string, eName: string) {
-    return `${gid}-${gSlug}-${gVersion}-${eName}` as EventRecorderId
+    return `${gid}:${gSlug}:${gVersion}:${eName}` as EventRecorderId
   }
 }
