@@ -577,7 +577,8 @@ export class ETHGlobalHacker extends BaseScanner {
       "0x7fc7f26344afde487f6ece252561bbdbf4fae880",
       "0x266d4fa9b246ac726bde577f3c847eb9a50d95b8",
       "0x77db288848ced8870e68b87aa4f2ac8b3e8b7175",
-      "0x617862d1aea6153cfe05456a05e3c46d7ebf048b"
+      "0x617862d1aea6153cfe05456a05e3c46d7ebf048b",
+      "0xb15115A15d5992A756D003AE74C0b832918fAb75"
     ]
 
     return addresses.map(addr => [`0:${addr.toLowerCase()}`, 1] as [RID, number])

@@ -214,8 +214,16 @@ export class TagManager extends BaseManager {
 
   @schedule("0 * * * * *")
   public async saveToCache() {
+    await this.clearUnusedRoots()
     if (tagMgr().scanResults) await cacheMgr().setKV(ScanResultKey, tagMgr().scanResults)
     if (tagMgr().rootResults) await cacheMgr().setKV(RootResultKey, tagMgr().rootResults)
+  }
+
+  private async clearUnusedRoots() {
+    const tags = await Tag.findAll()
+    const roots = Object.keys(this.rootResults);
+    const unusedRoots = roots.filter(root => !tags.find(tag => addrEq(tag.addressesRoot, root)))
+    for (const root of unusedRoots) delete this.rootResults[root];
   }
 
   public async loadFromCache() {
@@ -225,16 +233,30 @@ export class TagManager extends BaseManager {
 
   public async mintSBT(mintAddress: string,
                        user: User,
-                       snarkProofs: SnarkProof[]) {
+                       snarkProofs: SnarkProof[],
+                       nonZKTagIds: string[]) {
     if (addrEq(user.mintAddress, mintAddress))
       throw new BaseError(403, "Mint Address Not Match");
 
-    const tagIds = snarkProofs.map(p => p.input[3]);
+    const zkTagIds = snarkProofs.map(p => p.input[3]);
+    const tagIds = [...zkTagIds, ...nonZKTagIds];
 
     // 检查用户是否已经拥有该标签
     const userTags = await UserTag.findAll({
       where: { userId: user.id, tagId: {[Op.in]: tagIds} }
     });
+
+    if (nonZKTagIds.length > 0) {
+      const nonZKTags = (await Tag.findAll({
+        where: { id: {[Op.in]: nonZKTagIds}, zkEnable: false }
+      }))
+        // 过滤掉已经拥有的标签
+        .filter(tag => !userTags.find(ut => ut.tagId === tag.id));
+      if (nonZKTags.length > 0)
+        await UserTag.bulkCreate(nonZKTags.map(tag => ({
+          userId: user.id, tagId: tag.id, nullifiers: []
+        })))
+    }
 
     const pushSnarkProofs = snarkProofs.filter(p => {
       let destination = p.input[0], nullifier = p.input[4];

@@ -49,6 +49,7 @@ export class TagInterface extends BaseInterface {
   async mintSBT(
     @body("signInfo") signInfo: SignInfo,
     @body("snarkProofs") snarkProofs: SnarkProof[],
+    @body("tagIds") tagIds: string[],
     @custom("auth") _auth: Payload) {
 
     signMgr().verifySign(signInfo, false)

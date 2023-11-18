@@ -75,6 +75,8 @@ export class D2SManager extends BaseManager {
     const users = await User.findAll({
       where: { id: {[Op.in]: userIds}, mintAddress: {[Op.not]: null}}
     })
+    if (users.length === 0) return
+
     const addresses = users.map(u => u.mintAddress)
 
     const price = await this.data2Swap.methods.getPrice(key).call()
