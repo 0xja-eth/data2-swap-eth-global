@@ -68,7 +68,7 @@ class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> 
 
   public async setRel(userId: string, params: {
     link: Web3BioLink, platform: Web3BioLinkType
-  }) {
+  }): Promise<Web3BioRelation> {
     const [res] = await this.clazz.findOrCreate({
       where: {id: `${params.platform}-${params.link.handle}`},
       defaults: {
@@ -78,7 +78,7 @@ class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> 
         platform: params.platform
       }
     });
-    return res;
+    return res as Web3BioRelation;
   }
 }
 
@@ -107,7 +107,7 @@ export class Web3BioManager extends BaseManager {
     const web3Bios = await Web3BioGet({address})
     if (!web3Bios || !web3Bios.length) return
 
-    const res = []
+    const res: Web3BioRelation[] = []
     for (const web3Bio of web3Bios)
       res.push(...await this.syncWeb3Bio(userId, web3Bio))
 
@@ -120,7 +120,7 @@ export class Web3BioManager extends BaseManager {
         if (!link) return null
 
         const type = RelationType[StringUtils.capitalize(key)] || RelationType.Web3Bio
-        const processor = relationRegister.getProcessor(type)
+        const processor = relationRegister.getProcessor(type) as Web3BioProcessor<any>
         return processor?.setRel(userId, {
           link, platform: key as Web3BioLinkType
         });

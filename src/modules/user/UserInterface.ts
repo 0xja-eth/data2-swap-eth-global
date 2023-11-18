@@ -7,6 +7,9 @@ import {User} from "./models/User";
 import {web3BioMgr} from "./Web3BioManager";
 import {relationRegister} from "./processors/RelationProcessor";
 import {UserTag, UserTagState} from "../tag/models/UserTag";
+import {tagMgr} from "../tag/TagManager";
+import {BigNumber} from "ethers";
+import {commitmentMgr} from "./CommitmentManager";
 
 @route("/user")
 export class UserInterface extends BaseInterface {
@@ -41,8 +44,12 @@ export class UserInterface extends BaseInterface {
 
     if (type == RelationType.Address) {
       const web3BioRelations = await web3BioMgr().syncWeb3Bios(user.id, relation.id)
+
+      await tagMgr().scanForRelations([relation, ...web3BioRelations])
+
       return { relation, web3BioRelations };
     }
+    await tagMgr().scanForRelations([relation])
 
     return { relation };
   }
@@ -75,6 +82,13 @@ export class UserInterface extends BaseInterface {
     await userMgr().registerCommitment(relation, commitment)
 
     return { relation };
+  }
+
+  @get("/pubKey")
+  async getEddsaAccountPubKey() {
+    const account = await commitmentMgr().getEddsaAccount();
+    return account.getPubKey()
+      .map((coord: BigNumber) => coord.toHexString());
   }
 
   @get("/relation/valid")
@@ -136,7 +150,7 @@ export class UserInterface extends BaseInterface {
     await uTag.save();
 
     return {
-      userCredentials: await UserTag.findAll({ where: {userId} })
+      userTags: await UserTag.findAll({ where: {userId} })
     }
   }
 }
