@@ -4,7 +4,7 @@ import {auth, AuthType, Payload} from "./AuthManager";
 import {CodeType, userMgr} from "./UserManager";
 import {BaseError, ExistError, NotFoundError} from "../http/utils/ResponseUtils";
 import {User} from "./models/User";
-import {web3BioMgr} from "./Web3Bio";
+import {web3BioMgr} from "./Web3BioManager";
 import {relationRegister} from "./processors/RelationProcessor";
 import {UserTag, UserTagState} from "../tag/models/UserTag";
 
@@ -121,7 +121,7 @@ export class UserInterface extends BaseInterface {
     await _auth.user.save();
   }
 
-  @post("/credential/:id")
+  @post("/tag/:id")
   @auth(AuthType.Normal)
   async updateUserTagState(
     @params("id") id: string,

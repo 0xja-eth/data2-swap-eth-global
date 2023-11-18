@@ -34,7 +34,7 @@ export const Web3BioGet = get<{address: string}, Web3BioProfile[]>(Web3BioHost, 
 
 class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> {
 
-  private _type: T
+  private readonly _type: T
 
   public constructor(type: T) {
     super();
@@ -44,8 +44,9 @@ class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> 
   public get type() { return this._type; }
 
   public async setRel(userId: string, params: Web3BioLink) {
-    const [res] =  await this.clazz.findOrCreate({
-      where: {userId, id: params.link, name: params.handle},
+    const [res] = await this.clazz.findOrCreate({
+      where: {id: params.link},
+      defaults: {userId, name: params.handle}
     });
     return res;
   }
