@@ -29,13 +29,23 @@ export class UserInterface extends BaseInterface {
   async login(@custom("auth") _auth: Payload) {
     const {type, id, params} = _auth;
 
-    const {user, relations} = type == RelationType.Address &&
+    const {user, relations: allRelations} = type == RelationType.Address &&
       await userMgr().loginByMintAddress(id);
     const userTags = await UserTag.findAll({
       where: {userId: user.id}
     })
 
-    return { user, relations, userTags }
+    // const workId = MathUtils.randomString(32);
+    // await cacheMgr().setKV(`ScanForRelations:${workId}`, true)
+    // tagMgr().scanForRelations(allRelations)
+    //   .then(() => console.log("[ScanForRelations] login Done"))
+    //   .catch(e => console.error("[ScanForRelations] login Error", e))
+    //   .finally(() => cacheMgr().deleteKV(`ScanForRelations:${workId}`))
+
+    const relations = allRelations.filter(r => r.type == RelationType.Address)
+    const web3BioRelations = allRelations.filter(r => r.type != RelationType.Address)
+
+    return { user, relations, web3BioRelations, userTags } // workId }
   }
 
   @put("/address")
@@ -47,7 +57,7 @@ export class UserInterface extends BaseInterface {
     const {user} = _auth;
 
     const relation = await userMgr().bindRelation(user.id, RelationType.Address, signInfo);
-    const web3BioRelations = await web3BioMgr().syncWeb3Bios(user.id, relation.id)
+    const web3BioRelations = (await web3BioMgr().syncWeb3Bios(user.id, relation.id)) || []
 
     const workId = MathUtils.randomString(32);
     await cacheMgr().setKV(`ScanForRelations:${workId}`, true)

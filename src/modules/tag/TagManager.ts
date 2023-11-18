@@ -15,7 +15,7 @@ import {ContractOf, Contracts, getContract} from "../web3/ethereum/core/Contract
 import {UserTag, UserTagState} from "./models/UserTag";
 import {User} from "../user/models/User";
 import {BaseError} from "../http/utils/ResponseUtils";
-import {addrEq} from "../../utils/AddressUtils";
+import {addrEq, addrInclude} from "../../utils/AddressUtils";
 import {Op} from "sequelize";
 import {ethereum} from "../web3/ethereum/EthereumManager";
 import {TransactionReceipt} from "web3-core";
@@ -182,6 +182,19 @@ export class TagManager extends BaseManager {
 
     return tag.save();
   }
+
+  public async getTags(rids: RID[]) {
+    const tags = await Tag.findAll({where: {state: TagState.Active}})
+    return rids.map(rid => ({
+      rid, roots: Object.keys(this.rootResults)
+        .filter(key => addrInclude(this.rootResults[key], rid))
+    })).map(({rid, roots}) => ({
+      rid, tags: roots
+        .map(root => tags.find(tag => tag.addressesRoot === root))
+        .filter(tag => !!tag)
+    }))
+  }
+
   public calcAddressRoot(rids: string[]) {
     console.log("[CalcAddressRoot] Start", rids.length)
     rids = rids.map(rid => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rid)));
@@ -228,7 +241,7 @@ export class TagManager extends BaseManager {
       const destHex = BigNumber.from(destination).toHexString();
       const destAddress = destHex.slice(0, destHex.length - 20);
       if (!addrEq(destAddress, user.mintAddress))
-        throw new BaseError(600, "Address not match in snarkProof", {destAddress});
+        throw new BaseError(403, "Address not match in snarkProof", {destAddress});
 
       // 检查nullifier是否已经被使用
       return userTags.every(ut => !ut.nullifiers.includes(nullifier));
@@ -272,13 +285,7 @@ export class TagManager extends BaseManager {
   private async _onPushZKProof(e) {
     await tagMgr().onPushZKProof(e)
   }
-  private async onPushZKProof(e: Event<Contracts["ZKProfile"], "ZKProof", {
-    _dest: string,
-    _pubKey1: string,
-    _pubKey2: string,
-    _tagId: string,
-    _nullifier: string,
-  }>) {
+  private async onPushZKProof(e: Event<Contracts["ZKProfile"], "ZKProof">) {
     const { _to, _tagId, _nullifier } = e;
     const user = await User.findOne({ where: { mintAddress: _to } });
 
@@ -287,36 +294,13 @@ export class TagManager extends BaseManager {
     })
     if (!userTag)
       await UserTag.create({
-        tagId: _tagId, userId: user.id, state: UserTagState.Normal,
-        nullifiers: [_nullifier]
+        tagId: _tagId.toString(), userId: user.id, state: UserTagState.Normal,
+        nullifiers: [_nullifier.toString()]
       })
     else {
       userTag.state = UserTagState.Normal;
-      userTag.nullifiers = [...(userTag.nullifiers || []), _nullifier];
+      userTag.nullifiers = [...(userTag.nullifiers || []), _nullifier.toString()];
       await userTag.save();
     }
   }
-
-  // // region Addresses Storage
-  //
-  // public async getAddresses(tag: Tag) {
-  //   return JSON.parse(await this.getAddressesByRoot(tag.addressesRoot))
-  // }
-  // public getAddressesUrl(tag: Tag) {
-  //   if (!tag.addressesRoot) return null;
-  //   const path = `addressRoots/${tag.addressesRoot}.json`
-  //   return bucketMgr().getBucketUrl(path)
-  // }
-  // @cacheable(LongCacheSecond, String)
-  // private async getAddressesByRoot(root: string) {
-  //   const path = `addressRoots/${root}.json`
-  //   try {
-  //     const file = await bucketMgr().getFile(path)
-  //     return file.Body.toString()
-  //   } catch (e) {
-  //     return null
-  //   }
-  // }
-  //
-  // // endregion
 }

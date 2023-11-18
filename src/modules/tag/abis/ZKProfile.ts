@@ -99,9 +99,9 @@ const ABIData = [
       },
       {
         "indexed": false,
-        "internalType": "uint256[2][2]",
+        "internalType": "uint256[4]",
         "name": "_b",
-        "type": "uint256[2][2]"
+        "type": "uint256[4]"
       },
       {
         "indexed": false,
@@ -111,9 +111,33 @@ const ABIData = [
       },
       {
         "indexed": false,
-        "internalType": "uint256[5]",
-        "name": "_input",
-        "type": "uint256[5]"
+        "internalType": "uint256",
+        "name": "_dest",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "_pubKey1",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "_pubKey2",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "_tagId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "_nullifier",
+        "type": "uint256"
       }
     ],
     "name": "ZKProof",

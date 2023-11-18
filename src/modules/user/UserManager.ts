@@ -136,9 +136,13 @@ export class UserManager extends BaseManager {
    */
   public async getUserRelations(userId: string) {
     const relEntries = Array.from(relationRegister.values());
-    return (await Promise.all(
+    const res = (await Promise.all(
       relEntries.map(re => re.processor.findAllRel(userId))
     )).flat();
+    // 去重
+    return res.filter((rel, index) =>
+      res.findIndex(r => r.id == rel.id && r.type == rel.type) == index
+    );
   }
 
   /**

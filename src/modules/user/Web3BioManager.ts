@@ -1,8 +1,8 @@
 import {get} from "../http/NetworkManager";
 import {BaseManager, getManager, manager} from "../../app/ManagerContext";
 import {errorCatcher} from "../../utils/ErrorUtils";
-import {Relation, RelationBindParams, RelationType} from "./models/Relation";
-import {BaseRelationProcessor, relationRegister} from "./processors/RelationProcessor";
+import {Relation, RelationBindParams, RelationState, RelationType} from "./models/Relation";
+import {BaseRelationProcessor, RelationMissingError, relationRegister} from "./processors/RelationProcessor";
 import {signMgr} from "./SignManager";
 import {User} from "./models/User";
 import {ExistError} from "../http/utils/ResponseUtils";
@@ -58,10 +58,12 @@ export class Web3BioRelation extends Relation {
 class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> {
 
   private readonly _type: T
+  private readonly platform: Web3BioLinkType
 
-  public constructor(type: T) {
+  public constructor(type: T, platform?: Web3BioLinkType) {
     super();
     this._type = type
+    this.platform = platform
   }
 
   public get type() { return this._type; }
@@ -80,16 +82,28 @@ class Web3BioProcessor<T extends RelationType> extends BaseRelationProcessor<T> 
     });
     return res as Web3BioRelation;
   }
+
+  // /**
+  //  * 获取关系
+  //  */
+  // public async findRel(userId: string,
+  //                      includeExpired = false) {
+  //   const where = { userId }
+  //   if (this.platform) where["platform"] = this.platform
+  //   if (!includeExpired) where["state"] = RelationState.Normal
+  //
+  //   return await this.clazz.findOne({where})
+  // }
 }
 
 relationRegister.add(RelationType.Twitter, {
-  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Twitter)
+  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Twitter, "twitter")
 })
 relationRegister.add(RelationType.Github, {
-  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Github)
+  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Github, "github")
 })
 relationRegister.add(RelationType.Discord, {
-  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Discord)
+  clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Discord, "discord")
 })
 relationRegister.add(RelationType.Web3Bio, {
   clazz: Web3BioRelation, processor: new Web3BioProcessor(RelationType.Web3Bio)
