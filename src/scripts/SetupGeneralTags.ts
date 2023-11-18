@@ -34,6 +34,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Solidity developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "SolidityDev",
         compare: "gt",
@@ -44,6 +45,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Move developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "MoveDev",
         compare: "gt",
@@ -54,6 +56,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Web3 developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "Web3Dev",
         compare: "gt",
@@ -64,6 +67,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Python developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "PythonDev",
         compare: "gt",
@@ -74,6 +78,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "JS/TS developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "JSOrTsDev",
         compare: "gt",
@@ -84,6 +89,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Go developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "GoDev",
         compare: "gt",
@@ -94,6 +100,7 @@ async function doScript() {
       curator: "Data2.cash",
       description: "Rust developer",
       dataPower: 10,
+      zkEnable: false,
       rules: [{
         groupName: "RustDev",
         compare: "gt",

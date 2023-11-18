@@ -13,6 +13,7 @@
     "setup-general-tags": "npm run compile-scripts & node ./dist/scripts/scripts/SetupGeneralTags.js",
     "setup-event-recorders": "npm run compile-scripts & node ./dist/scripts/scripts/SetupEventRecorders.js",
     "push-test": "npm run compile-scripts & node ./dist/scripts/scripts/PushTest.js",
+    "web3-inbox-test": "npm run compile-scripts & node ./dist/scripts/scripts/Web3InboxTest.js",
     "build-test": "./scripts/build-test.sh",
     "run-test": "./scripts/build-test.sh & ./scripts/run-test.sh",
     "deploy-test": "./scripts/build-test.sh & ./scripts/deploy-test.sh"

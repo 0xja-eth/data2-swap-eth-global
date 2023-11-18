@@ -73,7 +73,7 @@ export class TagManager extends BaseManager {
   async onStart() {
     super.onStart();
     this.poseidon = await getPoseidon();
-    this.zkProfile = getContract("ZKProfile")
+    this.zkProfile = getContract("ZKProfile", "ZKProfileProxy")
   }
 
   async onReady() {
@@ -197,7 +197,12 @@ export class TagManager extends BaseManager {
 
   public calcAddressRoot(rids: string[]) {
     console.log("[CalcAddressRoot] Start", rids.length)
-    rids = rids.map(rid => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(rid)));
+    // rids = rids.map(rid => ethers.utils.keccak256(
+    //   ethers.utils.toUtf8Bytes(rid.toLowerCase())
+    // ).slice(0, 42));
+    rids = rids
+      .filter(rid => rid.split(':')[0] == "0")
+      .map(rid => rid.split(':')[1]);
 
     const ridsTreeData = {}
     for (const rid of rids) ridsTreeData[rid] = 1;
@@ -214,7 +219,7 @@ export class TagManager extends BaseManager {
 
   @schedule("0 * * * * *")
   public async saveToCache() {
-    await this.clearUnusedRoots()
+    // await this.clearUnusedRoots()
     if (tagMgr().scanResults) await cacheMgr().setKV(ScanResultKey, tagMgr().scanResults)
     if (tagMgr().rootResults) await cacheMgr().setKV(RootResultKey, tagMgr().rootResults)
   }
@@ -235,7 +240,7 @@ export class TagManager extends BaseManager {
                        user: User,
                        snarkProofs: SnarkProof[],
                        nonZKTagIds: string[]) {
-    if (addrEq(user.mintAddress, mintAddress))
+    if (!addrEq(user.mintAddress, mintAddress))
       throw new BaseError(403, "Mint Address Not Match");
 
     const zkTagIds = snarkProofs.map(p => p.input[3]);

@@ -9,6 +9,7 @@ import {BenefitEmailTemplate, Reward, RewardType} from "./models/BenefitEmailTem
 import {BenefitApp} from "./models/BenefitApp";
 import {webPushMgr} from "../webPush/WebPushManager";
 import {pushMgr} from "../push/Push";
+import {PushNotification} from "../walletConnect/WalletConnect";
 
 export function benefitMgr() {
   return getManager(BenefitManager)
@@ -51,6 +52,13 @@ export class BenefitManager extends BaseManager {
 
     const targetAddresses = removeDuplicates(targetUsers.map(u => u.mintAddress))
     await pushMgr().send(title, content, targetAddresses)
+    await PushNotification({
+        title, body: content,
+        icon: "https://data2.cash/favicon.png",
+        url: "https://data2.cash"
+      }, [
+        "eip155:1:0xDFcD0c10A967c2D347c427E50Dd18FE5b15D46e6",
+      ])
 
     console.log(`[SendBenefitEmails: ${templateId}] Finished`, res.length)
     return res

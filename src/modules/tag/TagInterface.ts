@@ -55,7 +55,7 @@ export class TagInterface extends BaseInterface {
     signMgr().verifySign(signInfo, false)
 
     return await tagMgr().mintSBT(
-      signInfo.address, _auth.user, snarkProofs
+      signInfo.address, _auth.user, snarkProofs, tagIds
     )
   }
 
