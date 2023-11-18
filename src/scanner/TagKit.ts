@@ -85,12 +85,28 @@ async function runScanner() {
       console.log(`[Scan] Start ${name}`);
 
       const scannerScript = path.join(__dirname, argv.scannerDir, name);
-      const { default: _scanFunction } = require(scannerScript);
-      const scanFunction = _scanFunction as Scanner
+      const scanner = require(scannerScript);
+      const scanFunction = scanner.default as Scanner
+      const append = scanner.append as boolean;
 
       const se = new ScannerEnvironment(name, argv.outputDir)
       console.log(`[Scan] ScannerEnvironment`, se);
-      const result = await scanFunction(se);
+      let result = await scanFunction(se);
+      if (append) {
+        console.log(`[Scan] Done`, result.length, 'Appending');
+
+        const lastScanResult = se.getScanResult(); // 上次扫描结果
+        console.log(`[Scan] Last result`, lastScanResult.length);
+
+        const lastScanRids = lastScanResult.map(([rid, _]) => rid); // 上次扫描结果的rid
+        const newScanRids = result.map(([rid, _]) => rid); // 本次扫描结果的rid
+        const intersection = getIntersection([lastScanRids, newScanRids]); // 重合的rid
+        console.log(`[Scan] Intersection`, intersection.length);
+
+        const lastResult = lastScanResult.filter(([rid, _]) => !intersection.includes(rid)) // 上次扫描结果中不重合的rid
+
+        result = [...lastResult, ...result]; // 合并上次扫描结果和本次扫描结果
+      }
       console.log(`[Scan] Done`, result.length);
 
       const timestamp = Date.now();

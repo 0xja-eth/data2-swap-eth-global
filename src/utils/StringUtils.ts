@@ -1,5 +1,9 @@
 export class StringUtils {
 
+	public static capitalize(str: string) {
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	}
+
 	public static makeURLString(url: string, data?: object) {
 		return data ? url + "?" + this.makeQueryParam(data) : url;
 	}

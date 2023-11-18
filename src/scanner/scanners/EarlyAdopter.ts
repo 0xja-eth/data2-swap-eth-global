@@ -7,12 +7,13 @@ import Discord from "../../modules/user/models/oauth/Discord";
 import {ModelStatic} from "sequelize-typescript";
 import {ModelCtor} from "sequelize-typescript/dist/model/model/model";
 import {User} from "../../modules/user/models/User";
+import {Web3BioRelation} from "../../modules/user/Web3BioManager";
 
 export default async function(se: ScannerEnvironment): Promise<[RID, number][]> {
   const users = await User.findAll({
     order: [['createdAt', 'ASC']] // 按创建时间升序排列
   })
-  const rClasses: ModelCtor<Relation>[] = [Address, Twitter, Github, Discord]
+  const rClasses: ModelCtor<Relation>[] = [Address, Twitter, Github, Discord, Web3BioRelation]
 
   const relations = await Promise.all(rClasses.map(clazz => clazz.findAll()))
   return relations.flat().map(

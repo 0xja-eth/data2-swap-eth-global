@@ -4,7 +4,8 @@ import {ModelCtor} from "sequelize-typescript/dist/model/model/model";
 import {SignInfo} from "../SignManager";
 
 export enum RelationType {
-  Address, Twitter, Discord, Github, Lens, Solana
+  Address, Twitter, Discord, Github, Lens, Solana,
+  Web3Bio = 10
 }
 
 export type RelationBindParams = {
@@ -18,6 +19,10 @@ export type RelationBindParams = {
     message: string // Hex
     publicKey: string // Base58
   } // Solana
+  [RelationType.Web3Bio]: {
+    link: Web3BioLink,
+    platform: Web3BioLinkType
+  }
 }
 
 export enum RelationState {
@@ -81,3 +86,4 @@ export abstract class Relation extends BaseModel implements IRelation {
 
 import {relationRegister} from "../processors/RelationProcessor";
 import {User} from "./User";
+import {Web3BioLink, Web3BioLinkType} from "../Web3BioManager";

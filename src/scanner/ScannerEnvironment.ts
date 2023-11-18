@@ -32,7 +32,9 @@ export class ScannerEnvironment {
     }
   }
 
-  public getScanResult(scanTime = Math.max(...this.scanTimes)): [RID, number][] {
+  public get lastScanTime() { return Math.max(...this.scanTimes)}
+
+  public getScanResult(scanTime = this.lastScanTime): [RID, number][] {
     const latestFile = path.join(this.outputDir, this.name, `${scanTime}.json`);
 
     try {

@@ -2,6 +2,7 @@ import {BaseModel, DateTimeColumn, EnumColumn, JSONColumn} from "../../sequelize
 import {model} from "../../sequelize/SequelizeManager";
 import {snowflakeModel} from "../../sequelize/snowflake/Snowflake";
 import {AllowNull, Column, DataType, Default, PrimaryKey, Table} from "sequelize-typescript";
+import {RelationType} from "../../user/models/Relation";
 
 export enum TagState {
   Active = "Active",
@@ -33,9 +34,17 @@ export class Tag extends BaseModel {
   @Column(DataType.INTEGER)
   dataPower!: number;
 
+  @Default(true)
+  @Column(DataType.BOOLEAN)
+  zkEnable!: boolean;
+
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  dynamic!: boolean; // 动态标签
+
   @AllowNull
   @JSONColumn("long")
-  rules: Rule[]; // Null => Registered address
+  rules: Rule[];
 
   @Column(DataType.STRING(256))
   addressesRoot: string;
