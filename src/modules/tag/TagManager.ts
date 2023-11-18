@@ -155,8 +155,8 @@ export class TagManager extends BaseManager {
 
   @schedule("0 * * * * *")
   public async saveToCache() {
-    await cacheMgr().setKV(ScanResultKey, this.scanResults)
-    await cacheMgr().setKV(RootResultKey, this.rootResults)
+    await cacheMgr().setKV(ScanResultKey, tagMgr().scanResults)
+    await cacheMgr().setKV(RootResultKey, tagMgr().rootResults)
   }
 
   public async loadFromCache() {
