@@ -64,6 +64,8 @@ export class UserInterface extends BaseInterface {
     return !(await cacheMgr().getKV(`ScanForRelations:${workId}`))
   }
 
+  // Admin
+
   @post("/login/force")
   async forceLogin(@body("address") address: string) {
     const {user, relations} = await userMgr().loginByMintAddress(address);

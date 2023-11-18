@@ -7,8 +7,7 @@ import {BenefitApp} from "../benefit/models/BenefitApp";
 import {BenefitEmailTemplate} from "../benefit/models/BenefitEmailTemplate";
 import {benefitMgr} from "../benefit/BenefitManager";
 
-import TestData from "./test-data.json"
-import {Event, onEvent} from "./EventManager";
+import {Event, onEvent} from "../theGraph/EventManager";
 import {UserTag, UserTagState} from "../tag/models/UserTag";
 
 export function d2sMgr() {

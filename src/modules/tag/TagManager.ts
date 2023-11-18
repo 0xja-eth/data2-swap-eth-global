@@ -10,6 +10,7 @@ import {schedule} from "../../utils/CronUtils";
 import {cacheMgr} from "../cache/CacheManager";
 import {EddsaAccount} from "@sismo-core/crypto";
 import {cacheable} from "../cache/Cacheable";
+import {onEvent} from "../theGraph/EventManager";
 
 export const AddressTreeHeight = 20;
 export const RegistryTreeHeight = 20;
@@ -170,6 +171,14 @@ export class TagManager extends BaseManager {
   public async loadFromCache() {
     this.scanResults = await cacheMgr().getKV(ScanResultKey, Object) as {[K: string]: [RID, number][]} || {}
     this.rootResults = await cacheMgr().getKV(RootResultKey, Object) as {[K: string]: string[]} || {}
+  }
+
+  @onEvent("ZKProof")
+  private async _onPushZKProof(e) {
+    await tagMgr().onPushZKProof(e)
+  }
+  private async onPushZKProof(e) {
+    // TODO: 同步ZKP记录
   }
 
   // // region Addresses Storage

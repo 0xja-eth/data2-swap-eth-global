@@ -2,7 +2,7 @@ import {BaseInterface, body, custom, get, params, post, route} from "../http/Int
 import {Tag, TagState} from "./models/Tag";
 import {tagMgr} from "./TagManager";
 import {auth, AuthType, Payload} from "../user/AuthManager";
-import {SignType} from "../user/SignManager";
+import {SignInfo, SignType} from "../user/SignManager";
 import {Relation, RID} from "../user/models/Relation";
 
 type InputPoseidon<T> = string;
@@ -73,11 +73,9 @@ export class TagInterface extends BaseInterface {
   @post("/mint")
   @auth(AuthType.Normal)
   async mintSBT(
-    @body("address") address: string,
-    @body("type") type: SignType,
-    @body("params") params: {timestamp: string},
-    @body("signature") signature: string,
+    @body("signInfo") signInfo: SignInfo,
     @body("snarkProofs") snarkProofs: SnarkProof[],
+    @body("tagIds") tagIds: string[],
     @custom("auth") _auth: Payload) {
 
     // TODO: 重新实现

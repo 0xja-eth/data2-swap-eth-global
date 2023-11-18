@@ -8,10 +8,13 @@ async function doScript() {
   const data: Partial<EventRecorder>[] = [
     {
       id: EventRecorder.makeId(GID, GSlug, GVersion, "Buy"),
-      fields: ['_cid', '_buyer', '_count', '_value']
+      fields: ['_tagIds', '_buyer', '_count', '_value']
     }, {
       id: EventRecorder.makeId(GID, GSlug, GVersion, "Send"),
-      fields: ['_cid', '_sender', '_title', '_content']
+      fields: ['_tagId', '_sender', '_title', '_content']
+    }, {
+      id: EventRecorder.makeId(GID, GSlug, GVersion, "ZKProof"),
+      fields: ['_to', '_a', '_b', '_c', '_dest', '_pubKey1', '_pubKey2', '_tagId', '_nullifier']
     }
   ]
 
@@ -24,5 +27,5 @@ app().start()
   .then(doScript)
   .then(() => process.exit(0));
 
-import {GID, GSlug, GVersion} from "../modules/d2s/EventManager";
-import {EventRecorder} from "../modules/d2s/EventRecorder";
+import {GID, GSlug, GVersion} from "../modules/theGraph/EventManager";
+import {EventRecorder} from "../modules/theGraph/EventRecorder";
