@@ -1,7 +1,7 @@
 #!/bin/sh
 
 name=$(head -n 1 app-name.txt)
-SERVER_NAME="$name-test"
+SERVER_NAME="$name"
 
 version=$(head -n 1 "$SERVER_NAME.version")
 new_version=$((version + 1))

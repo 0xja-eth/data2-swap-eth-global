@@ -15,10 +15,7 @@
     "push-test": "npm run compile-scripts & node ./dist/scripts/scripts/PushTest.js",
     "build-test": "./scripts/build-test.sh",
     "run-test": "./scripts/build-test.sh & ./scripts/run-test.sh",
-    "deploy-test": "./scripts/build-test.sh & ./scripts/deploy-test.sh",
-    "build-prod": "./scripts/build-prod.sh",
-    "run-prod": "./scripts/build-prod.sh & ./scripts/run-prod.sh",
-    "deploy-prod": "./scripts/build-prod.sh & ./scripts/deploy-prod.sh"
+    "deploy-test": "./scripts/build-test.sh & ./scripts/deploy-test.sh"
   },
   "bin": {
     "tag-kit": "./dist/scanner/TagKit.js"
