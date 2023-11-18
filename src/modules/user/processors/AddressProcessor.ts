@@ -9,6 +9,13 @@ class AddressProcessor extends BaseRelationProcessor<RelationType.Address> {
   public get type() { return RelationType.Address as const; }
 
   public async setRel(userId: string, params: RelationBindParams[RelationType.Address]) {
+    if ("forceAddress" in params) {
+      const [res] = await this.clazz.findOrCreate({
+        where: {id: params.forceAddress}, defaults: {userId, id: params.forceAddress}
+      });
+      return res
+    }
+
     signMgr().verifySign(params);
 
     let res = await this.clazz.findByPk(params.address);

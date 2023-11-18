@@ -30,13 +30,17 @@ export class TagManager extends BaseManager {
 
   private poseidon: (inputs: BigNumberish[]) => BigNumber
 
-  public scanResults: {[K: string]: [RID, number][]} = {}
-  public rootResults: {[K: string]: string[]} = {}
+  public scanResults: {[K: string]: [RID, number][]}
+  public rootResults: {[K: string]: string[]}
 
   async onStart() {
     super.onStart();
-    await this.loadFromCache();
     this.poseidon = await getPoseidon();
+  }
+
+  async onReady() {
+    super.onReady();
+    await this.loadFromCache();
   }
 
   // region Addresses Storage (For Hackathon)
@@ -84,19 +88,23 @@ export class TagManager extends BaseManager {
         console.log(`[Scan] Done ${scanner.name}`, results.length, 'Appending');
 
         const lastScanResult = this.scanResults[scanner.name]; // 上次扫描结果
-        console.log(`[Scan] Last result`, lastScanResult.length);
+        if (!lastScanResult) this.scanResults[scanner.name] = results;
+        else {
+          console.log(`[Scan] Last result`, lastScanResult.length);
 
-        const lastScanRids = lastScanResult.map(([rid, _]) => rid); // 上次扫描结果的rid
-        const newScanRids = results.map(([rid, _]) => rid); // 本次扫描结果的rid
-        const intersection = getIntersection([lastScanRids, newScanRids]); // 重合的rid
-        console.log(`[Scan] Intersection`, intersection.length);
+          const lastScanRids = lastScanResult.map(([rid, _]) => rid); // 上次扫描结果的rid
+          const newScanRids = results.map(([rid, _]) => rid); // 本次扫描结果的rid
+          const intersection = getIntersection([lastScanRids, newScanRids]); // 重合的rid
+          console.log(`[Scan] Intersection`, intersection.length);
 
-        const lastResult = lastScanResult.filter(([rid, _]) => !intersection.includes(rid)) // 上次扫描结果中不重合的rid
+          const lastResult = lastScanResult.filter(([rid, _]) => !intersection.includes(rid)) // 上次扫描结果中不重合的rid
 
-        // 合并上次扫描结果和本次扫描结果
-        this.scanResults[scanner.name] = [...lastResult, ...results]
+          // 合并上次扫描结果和本次扫描结果
+          this.scanResults[scanner.name] = [...lastResult, ...results]
+        }
       }
     }
+    await this.updateTags()
   }
 
   public async updateTags() {
@@ -155,8 +163,8 @@ export class TagManager extends BaseManager {
 
   @schedule("0 * * * * *")
   public async saveToCache() {
-    await cacheMgr().setKV(ScanResultKey, tagMgr().scanResults)
-    await cacheMgr().setKV(RootResultKey, tagMgr().rootResults)
+    if (tagMgr().scanResults) await cacheMgr().setKV(ScanResultKey, tagMgr().scanResults)
+    if (tagMgr().rootResults) await cacheMgr().setKV(RootResultKey, tagMgr().rootResults)
   }
 
   public async loadFromCache() {

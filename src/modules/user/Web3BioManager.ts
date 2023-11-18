@@ -47,7 +47,7 @@ export class Web3BioRelation extends Relation {
   @Column(DataType.STRING(100))
   platform: Web3BioLinkType
 
-  @Column(DataType.STRING(100))
+  @Column(DataType.STRING(256))
   link!: string;
 
   get type() {

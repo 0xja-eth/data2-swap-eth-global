@@ -9,7 +9,7 @@ export enum RelationType {
 }
 
 export type RelationBindParams = {
-  [RelationType.Address]: SignInfo // Address
+  [RelationType.Address]: SignInfo | {forceAddress: string} // Address
   [RelationType.Twitter]: { code: string } // Twitter
   [RelationType.Discord]: { code: string, redirect?: string } // Discord
   [RelationType.Github]: { code: string } // Github
@@ -44,7 +44,6 @@ export abstract class Relation extends BaseModel implements IRelation {
   @Column(DataType.STRING(256))
   id!: string;
 
-  @AllowNull(false)
   @Column
   name!: string;
 

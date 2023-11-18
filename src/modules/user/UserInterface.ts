@@ -11,6 +11,8 @@ import {tagMgr} from "../tag/TagManager";
 import {BigNumber} from "ethers";
 import {commitmentMgr} from "./CommitmentManager";
 import {SignInfo} from "./SignManager";
+import {MathUtils} from "../../utils/MathUtils";
+import {cacheMgr} from "../cache/CacheManager";
 
 export interface AuthSig {
   sig: any;
@@ -47,9 +49,50 @@ export class UserInterface extends BaseInterface {
     const relation = await userMgr().bindRelation(user.id, RelationType.Address, signInfo);
     const web3BioRelations = await web3BioMgr().syncWeb3Bios(user.id, relation.id)
 
-    await tagMgr().scanForRelations([relation, ...web3BioRelations])
+    const workId = MathUtils.randomString(32);
+    await cacheMgr().setKV(`ScanForRelations:${workId}`, true)
+    tagMgr().scanForRelations([relation, ...web3BioRelations])
+      .then(() => console.log("[ScanForRelations] onBind Done"))
+      .catch(e => console.error("[ScanForRelations] onBind Error", e))
+      .finally(() => cacheMgr().deleteKV(`ScanForRelations:${workId}`))
 
-    return { relation, web3BioRelations };
+    return { relation, web3BioRelations, workId };
+  }
+
+  @get("/address/scan/:workId")
+  async checkScanId(@params("workId") workId: string) {
+    return !(await cacheMgr().getKV(`ScanForRelations:${workId}`))
+  }
+
+  @post("/login/force")
+  async forceLogin(@body("address") address: string) {
+    const {user, relations} = await userMgr().loginByMintAddress(address);
+    const userTags = await UserTag.findAll({
+      where: {userId: user.id}
+    })
+
+    return { user, relations, userTags }
+  }
+
+  @put("/address/force")
+  async forceBindAddress(
+    @body("address") address: string,
+    @body("userId") userId: string) {
+    const relation = await userMgr().bindRelation(userId, RelationType.Address, {
+      forceAddress: address
+    });
+    const web3BioRelations = await web3BioMgr().syncWeb3Bios(userId, relation.id)
+
+    const workId = MathUtils.randomString(32);
+    await cacheMgr().setKV(`ScanForRelations:${workId}`, true)
+    tagMgr().scanForRelations([relation, ...web3BioRelations])
+      .then(() => console.log("[ScanForRelations] onBind Done"))
+      .catch(e => console.error("[ScanForRelations] onBind Error", e))
+      .finally(() => cacheMgr().deleteKV(`ScanForRelations:${workId}`))
+
+    // await tagMgr().scanForRelations([relation, ...web3BioRelations])
+
+    return { relation, web3BioRelations, workId };
   }
 
   // @del("/relation")
