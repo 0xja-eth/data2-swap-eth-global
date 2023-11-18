@@ -1,9 +1,9 @@
 import {BaseManager, getManager, manager} from "../../app/ManagerContext";
 import {ethereum} from "../web3/ethereum/EthereumManager";
 import {BigNumber} from "ethers";
-import {poseidon} from "./PoseidonUtils";
+import {getPoseidon, poseidon} from "./PoseidonUtils";
 
-import {EddsaAccount} from "@sismo-core/crypto";
+import {EddsaAccount, Poseidon} from "@sismo-core/crypto";
 import {cacheMgr} from "../cache/CacheManager";
 
 export const CommitmentKey = "commitments";
@@ -16,6 +16,13 @@ export function commitmentMgr() {
 export class CommitmentManager extends BaseManager {
 
   private eddsaAccount: EddsaAccount;
+
+  private poseidon: Poseidon
+
+  async onStart() {
+    super.onStart();
+    this.poseidon = await getPoseidon();
+  }
 
   public async getEddsaAccount() {
     if (!this.eddsaAccount) {
@@ -32,7 +39,7 @@ export class CommitmentManager extends BaseManager {
     const account = await this.getEddsaAccount();
     console.log("[Push Commitment] account:", account)
 
-    const message = await poseidon([address, commitment]);
+    const message = this.poseidon([address, commitment]);
     console.log("[Push Commitment] message:", message)
 
     const commitmentReceipt = account.sign(message);

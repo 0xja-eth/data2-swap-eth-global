@@ -18,12 +18,12 @@ export function d2sMgr() {
 
 @manager
 export class D2SManager extends BaseManager {
-  public dataSwap: ContractOf<"Data2Swap">
+  public data2Swap: ContractOf<"Data2Swap">
 
   public onReady() {
     super.onReady();
 
-    this.dataSwap = getContract("Data2Swap")
+    this.data2Swap = getContract("Data2Swap")
   }
 
   // @onEvent("Buy")
@@ -43,7 +43,7 @@ export class D2SManager extends BaseManager {
   public async getTagIds(key: string) {
     const res: string[] = [];
     while (true) {
-      try { res[res.length] = await this.dataSwap.methods.keyTagIds(key, res.length).call() }
+      try { res[res.length] = await this.data2Swap.methods.keyTagIds(key, res.length).call() }
       catch (e) { console.log(`getTagIds ${key}, ${res.length} break:`, e); break }
     }
     return res
@@ -77,7 +77,7 @@ export class D2SManager extends BaseManager {
     })
     const addresses = users.map(u => u.mintAddress)
 
-    const price = await this.dataSwap.methods.getPrice(key).call()
+    const price = await this.data2Swap.methods.getPrice(key).call()
     const benefit = BigNumber.from(price).div(addresses.length)
 
     const ethPrice = "2100" // ETH Price
@@ -89,7 +89,7 @@ export class D2SManager extends BaseManager {
     })
 
     // Release benefit
-    await this.dataSwap.methods.release({
+    await this.data2Swap.methods.release({
       _key: key, _addresses: addresses
     }).quickSend()
 

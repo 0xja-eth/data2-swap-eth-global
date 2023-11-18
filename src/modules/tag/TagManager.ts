@@ -225,10 +225,11 @@ export class TagManager extends BaseManager {
 
   public async mintSBT(mintAddress: string,
                        user: User,
-                       snarkProofs: SnarkProof[],
-                       tagIds: string[]) {
+                       snarkProofs: SnarkProof[]) {
     if (addrEq(user.mintAddress, mintAddress))
       throw new BaseError(403, "Mint Address Not Match");
+
+    const tagIds = snarkProofs.map(p => p.input[3]);
 
     // 检查用户是否已经拥有该标签
     const userTags = await UserTag.findAll({

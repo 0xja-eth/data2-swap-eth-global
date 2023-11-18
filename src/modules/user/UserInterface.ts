@@ -1,5 +1,5 @@
 import {BaseInterface, body, custom, del, get, params, post, put, query, route} from "../http/InterfaceManager";
-import {RelationType} from "./models/Relation";
+import {IRelation, RelationType} from "./models/Relation";
 import {auth, AuthType, Payload} from "./AuthManager";
 import {CodeType, userMgr} from "./UserManager";
 import {BaseError, ExistError, NotFoundError} from "../http/utils/ResponseUtils";
@@ -10,7 +10,7 @@ import {UserTag, UserTagState} from "../tag/models/UserTag";
 import {tagMgr} from "../tag/TagManager";
 import {BigNumber} from "ethers";
 import {commitmentMgr} from "./CommitmentManager";
-import {SignInfo} from "./SignManager";
+import {SignInfo, signMgr} from "./SignManager";
 import {MathUtils} from "../../utils/MathUtils";
 import {cacheMgr} from "../cache/CacheManager";
 
@@ -135,6 +135,43 @@ export class UserInterface extends BaseInterface {
     await userMgr().registerCommitment(relation, commitment)
 
     return { relation };
+  }
+
+  @put("/commitments")
+  @auth(AuthType.Normal)
+  async pushCommitments(
+    @body("relations") relations: IRelation[],
+    @body("commitments") commitments: string[],
+    @custom("auth") _auth: Payload) {
+
+    return {
+      relations: await Promise.all(relations.map(async ({id, type}, i) => {
+        const commitment = commitments[i];
+        const clazz = relationRegister.getClazz(type);
+
+        const res = await clazz.findOne({
+          where: {id, userId: _auth.user.id}
+        })
+        if (!res) throw new NotFoundError(RelationType[type]);
+
+        await userMgr().registerCommitment(res, commitment)
+
+        return res
+      }))
+    };
+  }
+
+  @put("/mint/commitment")
+  @auth(AuthType.Normal)
+  async pushMintCommitment(
+    @body("signInfo") signInfo: SignInfo,
+    @body("commitment") commitment: string,
+    @custom("auth") _auth: Payload) {
+    if (_auth.user.mintAddress != signInfo.address)
+      throw new BaseError(403, "Invalid Address")
+    signMgr().verifySign(signInfo, false)
+
+    return await commitmentMgr().push(signInfo.address, commitment)
   }
 
   @get("/pubKey")
