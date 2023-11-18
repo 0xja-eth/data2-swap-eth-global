@@ -57,7 +57,6 @@ export class TagInterface extends BaseInterface {
     return await tagMgr().mintSBT(
       signInfo.address, _auth.user, snarkProofs, tagIds
     )
-    // TODO: 重新实现
   }
 
 }

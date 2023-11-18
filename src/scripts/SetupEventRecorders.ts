@@ -8,10 +8,10 @@ async function doScript() {
   const data: Partial<EventRecorder>[] = [
     {
       id: EventRecorder.makeId(GID, GSlug, GVersion, "Buy"),
-      fields: ['_tagIds', '_buyer', '_count', '_value']
+      fields: ['_key', '_buyer', '_count', '_value']
     }, {
       id: EventRecorder.makeId(GID, GSlug, GVersion, "Send"),
-      fields: ['_tagId', '_sender', '_title', '_content']
+      fields: ['_key', '_sender', '_title', '_content']
     }, {
       id: EventRecorder.makeId(GID, GSlug, GVersion, "ZKProof"),
       fields: ['_to', '_a', '_b', '_c', '_dest', '_pubKey1', '_pubKey2', '_tagId', '_nullifier']

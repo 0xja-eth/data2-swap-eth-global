@@ -7,7 +7,7 @@ import {schedule} from "../../utils/CronUtils";
 
 export const GID = "45027"
 export const GSlug = "data2-cash-scroll"
-export const GVersion = "v0.0.1"
+export const GVersion = "v0.1.1"
 
 const ScanCorn = "*/5 * * * * *"
 
@@ -80,7 +80,7 @@ export class EventManager extends BaseManager {
     let events: Event[] = []
     try {
       const queryRes = await queryFunc(query)
-      events = queryRes?.data?.[`${eName.toLowerCase()}s`] as Event[]
+      events = (queryRes?.data?.[`${eName.toLowerCase()}s`] as Event[]) || []
     } catch (e) {
       console.error("[scanEvent] error", e)
     }

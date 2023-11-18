@@ -1,6 +1,6 @@
 import {snowflake} from "../modules/sequelize/snowflake/Snowflake";
 import {app} from "../app/App";
-import {Tag} from "../modules/tag/models/Tag";
+import {Tag, TagState} from "../modules/tag/models/Tag";
 
 process.env["SCRIPT"] = "true";
 
@@ -9,10 +9,21 @@ async function doScript() {
 
   const data: Partial<Tag>[] = [
     {
+      name: "ETH Global Hacker",
+      curator: "Data2.cash",
+      description: "Hackers participated in ETH Global",
+      dataPower: 10,
+      rules: [{
+        groupName: "ETHGlobalHacker",
+        compare: "gt",
+        value: 0,
+      }]
+    }, {
       name: "Early Adopter",
       curator: "Data2.cash",
       description: "First 1000 user of Data2.cash",
       dataPower: 10,
+      state: TagState.Hidden,
       rules: [{
         groupName: "EarlyAdopter",
         compare: "lte",
