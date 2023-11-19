@@ -296,22 +296,25 @@ export class TagManager extends BaseManager {
       //   console.error("[Mint SBT failed]", e, pushSnarkProofs)
       //   throw e;
       // }
-      const pushSnarkProofGroup = splitArray(pushSnarkProofs, 2)
-      for (const pushSnarkProofs of pushSnarkProofGroup) {
-        try {
-          tx = await this.zkProfile.methods.pushZKProofs({
-            _a: pushSnarkProofs.map(p => p.a),
-            _b: pushSnarkProofs.map(p => p.b),
-            _c: pushSnarkProofs.map(p => p.c),
-            _input: pushSnarkProofs.map(p => p.input)
-          }).quickSend({gasMult: 3});
+      const mint = async () => {
+        const pushSnarkProofGroup = splitArray(pushSnarkProofs, 2)
+        for (const pushSnarkProofs of pushSnarkProofGroup) {
+          try {
+            tx = await this.zkProfile.methods.pushZKProofs({
+              _a: pushSnarkProofs.map(p => p.a),
+              _b: pushSnarkProofs.map(p => p.b),
+              _c: pushSnarkProofs.map(p => p.c),
+              _input: pushSnarkProofs.map(p => p.input)
+            }).quickSend({gasMult: 3});
 
-          txHash ||= tx.transactionHash;
-        } catch (e) {
-          console.error("[Mint SBT failed]", e, pushSnarkProofs)
-          throw e;
+            txHash ||= tx.transactionHash;
+          } catch (e) {
+            console.error("[Mint SBT failed]", e, pushSnarkProofs)
+            // throw e;
+          }
         }
       }
+      mint().then();
     }
 
     const tokenIdStr = await this.zkProfile.methods
@@ -341,7 +344,7 @@ export class TagManager extends BaseManager {
     const userTag = await UserTag.findOne({
       where: { tagId: _tagId, userId: user.id }
     })
-    console.log("[onPushZKProof]", user.id, _tagId, _nullifier, userTag.toJSON())
+    console.log("[onPushZKProof]", user.id, _tagId, _nullifier, userTag?.toJSON())
 
     if (!userTag) {
       await UserTag.create({

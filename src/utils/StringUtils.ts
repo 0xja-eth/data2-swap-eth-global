@@ -1,5 +1,9 @@
 export class StringUtils {
 
+	public static displayAddress(address) {
+		const len = address?.length;
+		return address && `${address.slice(0,6)}...${address.slice(len - 4, len)}`
+	}
 	public static capitalize(str: string) {
 		return str.charAt(0).toUpperCase() + str.slice(1);
 	}

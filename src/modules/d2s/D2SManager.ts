@@ -11,6 +11,10 @@ import {Event, onEvent} from "../theGraph/EventManager";
 import {UserTag, UserTagState} from "../tag/models/UserTag";
 import {getIntersection, groupBy} from "../../utils/ArrayUtils";
 import {cacheable} from "../cache/Cacheable";
+import {Tag} from "../tag/models/Tag";
+import {PushNotification} from "../walletConnect/WalletConnect";
+import {StringUtils} from "../../utils/StringUtils";
+import {pushMgr} from "../push/Push";
 
 export function d2sMgr() {
   return getManager(D2SManager)
@@ -59,9 +63,9 @@ export class D2SManager extends BaseManager {
   }
 
   public async send(sender: string, key: string, title: string, content: string) {
-    const [app] = await BenefitApp.findOrCreate({
-      where: { name: `dataSwap User: ${sender}` }
-    })
+    // const [app] = await BenefitApp.findOrCreate({
+    //   where: { name: `dataSwap User: ${sender}` }
+    // })
 
     const tagIds = await this.getTagIds(key)
     const userTags = await UserTag.findAll({
@@ -85,19 +89,34 @@ export class D2SManager extends BaseManager {
     const ethPrice = "2100" // ETH Price
     const benefitInUSD = Number(benefit.mul(ethPrice).toString()) / 10e18
 
-    const template = await BenefitEmailTemplate.create({
-      appId: app.id, credentialIds: tagIds, title, content,
-      deliveredReward: benefitInUSD,
-    })
+    // const template = await BenefitEmailTemplate.create({
+    //   appId: app.id, credentialIds: tagIds, title, content,
+    //   deliveredReward: benefitInUSD,
+    // })
 
     // Release benefit
     await this.data2Swap.methods.release({
       _key: key, _addresses: addresses
     }).quickSend()
 
-    const res = await benefitMgr().sendBenefitEmails(template.id, users)
+    // const res = await benefitMgr().sendBenefitEmails(template.id, users)
+    // console.log("sendBenefitEmails", res)
 
-    console.log("sendBenefitEmails", res)
+    const tags = await Tag.findAll()
+    await PushNotification({
+      title: StringUtils.displayAddress(sender),
+      body: JSON.stringify({
+        tag: tagIds.map(id => tags.find(t => t.id === id)?.name).join(" & "),
+        action: "Buy", reward: benefitInUSD
+      }),
+      icon: "https://tag-trove.vercel.app/logo-short.png",
+      url: "https://tag-trove.vercel.app/"
+    }, [
+      "eip155:1:0xDFcD0c10A967c2D347c427E50Dd18FE5b15D46e6",
+      "eip155:1:0xb15115A15d5992A756D003AE74C0b832918fAb75",
+      ...addresses.map(a => `eip155:1:${a}`)
+    ])
+    await pushMgr().send(title, content)
 
     // Send email & push notification
   }

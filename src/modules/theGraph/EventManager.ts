@@ -7,9 +7,9 @@ import {schedule} from "../../utils/CronUtils";
 
 export const GID = "45027"
 export const GSlug = "data2-cash-scroll"
-export const GVersion = "v0.1.1"
+export const GVersion = "v0.1.2"
 
-const ScanCorn = "*/5 * * * * *"
+const ScanCorn = "*/10 * * * * *"
 
 const Host = "https://api.studio.thegraph.com/query"
 
