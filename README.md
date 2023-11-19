@@ -1,51 +1,65 @@
-# Exermon NodeJS Framework
+# Tag Trove
 
 ## Getting Started
 
-### 创建配置项
+### Create Config File
 
-从 `example.env.json` 复制一份配置文件
+Copy from `example.env.json` to `env.default.json`.
 
 ```bash
 cp example.env.json env.default.json
 ```
 
-在 `env.default.json` 中填写配置项，比如配置Sequelize连接数据库的参数。
+Write some configurations in `env.default.json`. For example Sequelize database params。
 
-#### 配置项说明
+#### Configurations
 
-部分重点配置项说明如下：
+Configurations of Tag Trove:
 
-| 配置项 | 说明 |
+| Configuration | Note |
 | --- | --- |
-| `http` | HTTP配置 |
-| `http.port` | 接口监听端口 |
-| `http.baseRoute` | 接口根路由 |
-| `sequelize` | Sequelize配置 |
-| `sequelize.host` | 数据库地址 |
-| `sequelize.port` | 数据库端口 |
-| `sequelize.username` | 数据库用户名 |
-| `sequelize.password` | 数据库密码 |
-| `sequelize.database` | 连接的数据库名称 |
-| `redis` | Redis配置 |
-| `redis.host` | Redis地址 |
-| `redis.port` | Redis端口 |
-| `redis.password` | Redis密码 |
-| `redis.db` | Redis数据库 |
+| `http` |  |
+| `http.port` | API port |
+| `http.baseRoute` | API root route |
+| `sequelize` |  |
+| `sequelize.host` | Database host |
+| `sequelize.port` | Database port |
+| `sequelize.username` | Database username |
+| `sequelize.password` | Database password |
+| `sequelize.database` | Database name |
+| `redis` |  |
+| `redis.host` | Redis host |
+| `redis.port` | Redis port |
+| `redis.password` | Redis password |
+| `redis.db` | Redis db number |
+| `ethereum` |  |
+| `ethereum.defaultProvider` | Default chain |
+| `ethereum.privateKey` | Private key |
+| `ethereum.contractsFile` | File that store contracts' configurations |
+| `ethereum.chainsFile` | File that store chains' configurations |
+| `github` |  |
+| `github.token` | Private github token |
+| `push` |  |
+| `push.rpcUrl` | Push rpcUrl |
+| `push.privateKey` | Push privateKey |
+| `wc` |  |
+| `wc.projectId` | WalletConnect project id |
+| `wc.apiSecret` | WalletConnect api secret |
+| `wc.notificationType` | WalletConnect notification type |
 
-### 安装依赖
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 同步数据库
+### Sync Sequelize Database
 
 ```bash
 npm run sync-sequelize
 ```
 
-### 启动服务
+### Start Server
 
 ```bash
 npm run node
