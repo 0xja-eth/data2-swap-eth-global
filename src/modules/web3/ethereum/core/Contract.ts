@@ -268,6 +268,7 @@ export class Contract<T extends ABI> {
           if (options?.gasMult) gasPrice = gasPrice.muln(options.gasMult);
           if (options?.log) console.log("... Gas price:", gasPrice.toString())
           const res: any = await tx.send({
+            // nonce: await web3.eth.getTransactionCount(from) ,
             from, gas, gasPrice: gasPrice.toString(), ...options
           })
           console.log("... Success!", method, tx, res);

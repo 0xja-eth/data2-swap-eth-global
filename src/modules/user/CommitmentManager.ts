@@ -32,14 +32,14 @@ export class CommitmentManager extends BaseManager {
     return this.eddsaAccount
   }
 
-  public async push(address: string, commitment: string) {
-    await this.add(address, commitment);
-    console.log("[Push Commitment]", address, commitment)
+  public async push(id: string, commitment: string) {
+    await this.add(id, commitment);
+    console.log("[Push Commitment]", id, commitment)
 
     const account = await this.getEddsaAccount();
     console.log("[Push Commitment] account:", account)
 
-    const message = this.poseidon([address, commitment]);
+    const message = this.poseidon([id, commitment]);
     console.log("[Push Commitment] message:", message)
 
     const commitmentReceipt = account.sign(message);

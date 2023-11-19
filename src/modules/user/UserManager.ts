@@ -13,6 +13,8 @@ import {benefitMgr} from "../benefit/BenefitManager";
 import {StringUtils} from "../../utils/StringUtils";
 import {get} from "../http/NetworkManager";
 import {commitmentMgr} from "./CommitmentManager";
+import {ethereum} from "../web3/ethereum/EthereumManager";
+import {ethers} from "ethers";
 
 export enum CodeType {
   Bind = "bind"
@@ -173,7 +175,14 @@ export class UserManager extends BaseManager {
   public async registerCommitment(relation: Relation, commitment: string) {
     if (relation.commitment == commitment) return;
 
-    const pushRes = await commitmentMgr().push(relation.id, commitment)
+    const web3 = ethereum().web3
+    const id = relation.type == RelationType.Address ?
+      relation.id.toLowerCase() :
+      web3.eth.accounts.privateKeyToAccount(
+        ethers.utils.keccak256(ethers.utils.toUtf8Bytes(relation.id.toLowerCase()))
+      ).address.toLowerCase()
+
+    const pushRes = await commitmentMgr().push(id, commitment)
 
     relation.commitment = commitment;
     relation.commitmentReceipt = pushRes.commitmentReceipt;

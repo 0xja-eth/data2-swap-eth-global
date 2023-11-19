@@ -4,6 +4,7 @@ import {SnarkProof, tagMgr} from "./TagManager";
 import {auth, AuthType, Payload} from "../user/AuthManager";
 import {SignInfo, signMgr, SignType} from "../user/SignManager";
 import {Relation, RID} from "../user/models/Relation";
+import {UserTag, UserTagState} from "./models/UserTag";
 
 @route("/tag")
 export class TagInterface extends BaseInterface {
@@ -59,4 +60,14 @@ export class TagInterface extends BaseInterface {
     )
   }
 
+  @get("/counts")
+  async tagCounts() {
+    const userTags = await UserTag.findAll({
+      where: {state: UserTagState.Normal}
+    })
+    return userTags.reduce((acc, cur) => {
+      acc[cur.tagId] = (acc[cur.tagId] || 0) + 1
+      return acc
+    }, {})
+  }
 }

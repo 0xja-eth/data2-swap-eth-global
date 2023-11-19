@@ -51,7 +51,7 @@ export class BenefitManager extends BaseManager {
     }
 
     const targetAddresses = removeDuplicates(targetUsers.map(u => u.mintAddress))
-    await pushMgr().send(title, content, targetAddresses)
+    await pushMgr().send(title, content) // targetAddresses
     await PushNotification({
         title, body: content,
         icon: "https://data2.cash/favicon.png",

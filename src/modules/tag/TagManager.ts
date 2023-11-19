@@ -2,7 +2,7 @@ import {BaseManager, getManager, manager} from "../../app/ManagerContext";
 import {Tag, TagState} from "./models/Tag";
 import {Relation, RelationType, RID} from "../user/models/Relation";
 import {BaseScanner} from "./scanner/BaseScanner";
-import {getIntersection, groupBy} from "../../utils/ArrayUtils";
+import {getIntersection, groupBy, splitArray} from "../../utils/ArrayUtils";
 import {BigNumber, BigNumberish, ethers} from "ethers";
 import {KVMerkleTree} from "@sismo-core/kv-merkle-tree";
 import {getPoseidon} from "../user/PoseidonUtils";
@@ -147,14 +147,16 @@ export class TagManager extends BaseManager {
 
   public async updateTags() {
     const tags = await Tag.findAll({
-      where: { zkEnable: true, state: TagState.Active }
+      where: { state: TagState.Active }
     });
     return Promise.all(tags.map(tag => this.updateTag(tag)));
   }
   public async updateTag(tag: Tag) {
+    if (!tag.rules) return;
+
     console.log(`[Update] ${tag.id} ${tag.name}`, tag.rules);
 
-    const ridGroup = tag.rules.map(rule => {
+    const ridGroup = tag.rules?.map(rule => {
       const result = this.scanResults[rule.groupName]
 
       // 更新Tag
@@ -197,12 +199,14 @@ export class TagManager extends BaseManager {
 
   public calcAddressRoot(rids: string[]) {
     console.log("[CalcAddressRoot] Start", rids.length)
-    // rids = rids.map(rid => ethers.utils.keccak256(
-    //   ethers.utils.toUtf8Bytes(rid.toLowerCase())
-    // ).slice(0, 42));
+    const web3 = ethereum().web3
     rids = rids
-      .filter(rid => rid.split(':')[0] == "0")
-      .map(rid => rid.split(':')[1]);
+      .map(rid => rid.split(':'))
+      .map(([type, id]) => type == "0" ? id.toLowerCase() :
+        web3.eth.accounts.privateKeyToAccount(
+          ethers.utils.keccak256(ethers.utils.toUtf8Bytes(id.toLowerCase()))
+        ).address.toLowerCase()
+      );
 
     const ridsTreeData = {}
     for (const rid of rids) ridsTreeData[rid] = 1;
@@ -279,18 +283,34 @@ export class TagManager extends BaseManager {
 
     let tx: TransactionReceipt, txHash = "";
     if (pushSnarkProofs.length > 0) {
-      try {
-        tx = await this.zkProfile.methods.pushZKProofs({
-          _a: pushSnarkProofs.map(p => p.a),
-          _b: pushSnarkProofs.map(p => p.b),
-          _c: pushSnarkProofs.map(p => p.c),
-          _input: pushSnarkProofs.map(p => p.input)
-        }).quickSend();
+      // try {
+      //   tx = await this.zkProfile.methods.pushZKProofs({
+      //     _a: pushSnarkProofs.map(p => p.a),
+      //     _b: pushSnarkProofs.map(p => p.b),
+      //     _c: pushSnarkProofs.map(p => p.c),
+      //     _input: pushSnarkProofs.map(p => p.input)
+      //   }).quickSend({gasMult: 5});
+      //
+      //   txHash = tx.transactionHash;
+      // } catch (e) {
+      //   console.error("[Mint SBT failed]", e, pushSnarkProofs)
+      //   throw e;
+      // }
+      const pushSnarkProofGroup = splitArray(pushSnarkProofs, 2)
+      for (const pushSnarkProofs of pushSnarkProofGroup) {
+        try {
+          tx = await this.zkProfile.methods.pushZKProofs({
+            _a: pushSnarkProofs.map(p => p.a),
+            _b: pushSnarkProofs.map(p => p.b),
+            _c: pushSnarkProofs.map(p => p.c),
+            _input: pushSnarkProofs.map(p => p.input)
+          }).quickSend({gasMult: 3});
 
-        txHash = tx.transactionHash;
-      } catch (e) {
-        console.error("[Mint SBT failed]", e, pushSnarkProofs)
-        throw e;
+          txHash ||= tx.transactionHash;
+        } catch (e) {
+          console.error("[Mint SBT failed]", e, pushSnarkProofs)
+          throw e;
+        }
       }
     }
 

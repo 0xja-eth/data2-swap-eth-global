@@ -145,19 +145,21 @@ export class UserInterface extends BaseInterface {
     @custom("auth") _auth: Payload) {
 
     return {
-      relations: await Promise.all(relations.map(async ({id, type}, i) => {
-        const commitment = commitments[i];
-        const clazz = relationRegister.getClazz(type);
+      relations: await Promise.all(relations
+        // .filter(({type}) => type == RelationType.Address)
+        .map(async ({id, type}, i) => {
+          const commitment = commitments[i];
+          const clazz = relationRegister.getClazz(type);
 
-        const res = await clazz.findOne({
-          where: {id, userId: _auth.user.id}
-        })
-        if (!res) throw new NotFoundError(RelationType[type]);
+          const res = await clazz.findOne({
+            where: {id, userId: _auth.user.id}
+          })
+          if (!res) throw new NotFoundError(RelationType[type]);
 
-        await userMgr().registerCommitment(res, commitment)
+          await userMgr().registerCommitment(res, commitment)
 
-        return res
-      }))
+          return res
+        }))
     };
   }
 
