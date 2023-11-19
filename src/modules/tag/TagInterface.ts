@@ -31,13 +31,15 @@ export class TagInterface extends BaseInterface {
     @body("rids", true) rids: RID[]
   ) {
     if (!rids) await tagMgr().scanForAll()
-    else await tagMgr().scanForRelations(rids.map(Relation.fromRID))
+    else await tagMgr().scanForRelations(
+      await Promise.all(rids.map(Relation.fromRID))
+    )
   }
   @post("/scan/:rid")
   async scanForRelation(
     @params("rid") rid: RID
   ) {
-    const relation = Relation.fromRID(rid)
+    const relation = await Relation.fromRID(rid)
     await tagMgr().scanForRelations([relation])
   }
   @post("/tags/update")

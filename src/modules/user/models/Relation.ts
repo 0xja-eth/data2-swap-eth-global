@@ -71,9 +71,12 @@ export abstract class Relation extends BaseModel implements IRelation {
 
   public static fromRID(rid: RID) {
     const [type, id] = rid.split(":");
-    const clazz = relationRegister.getClazz(Number(type) as RelationType);
-    // @ts-ignore
-    return new clazz({id});
+    const processor = relationRegister.getProcessor(Number(type) as RelationType);
+    return processor.getRelById(id);
+    //
+    // const clazz = relationRegister.getClazz(Number(type) as RelationType);
+    // // @ts-ignore
+    // return new clazz({id});
   }
 
   public toJSON() {

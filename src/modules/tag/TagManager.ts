@@ -336,19 +336,25 @@ export class TagManager extends BaseManager {
   private async onPushZKProof(e: Event<Contracts["ZKProfile"], "ZKProof">) {
     const { _to, _tagId, _nullifier } = e;
     const user = await User.findOne({ where: { mintAddress: _to } });
+    if (!user) return console.error("[onPushZKProof] user not found", _to)
 
     const userTag = await UserTag.findOne({
       where: { tagId: _tagId, userId: user.id }
     })
-    if (!userTag)
+    console.log("[onPushZKProof]", user.id, _tagId, _nullifier, userTag.toJSON())
+
+    if (!userTag) {
       await UserTag.create({
         tagId: _tagId.toString(), userId: user.id, state: UserTagState.Normal,
         nullifiers: [_nullifier.toString()]
       })
-    else {
+      console.log("[onPushZKProof] created")
+    } else {
       userTag.state = UserTagState.Normal;
       userTag.nullifiers = [...(userTag.nullifiers || []), _nullifier.toString()];
       await userTag.save();
+
+      console.log("[onPushZKProof] updated", userTag?.nullifiers)
     }
   }
 }

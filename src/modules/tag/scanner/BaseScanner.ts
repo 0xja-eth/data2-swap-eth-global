@@ -1,4 +1,4 @@
-import {Relation, RelationType, RID} from "../../user/models/Relation";
+import {IRelation, Relation, RelationType, RID} from "../../user/models/Relation";
 
 export function scanner(name: string) {
   return clazz => {
@@ -21,5 +21,5 @@ export abstract class BaseScanner {
   }
 
   public scanForAll: () => Promise<[RID, number][]>;
-  public scanForRelations: (relations: Relation[]) => Promise<[RID, number][]>;
+  public scanForRelations: (relations: IRelation[]) => Promise<[RID, number][]>;
 }
